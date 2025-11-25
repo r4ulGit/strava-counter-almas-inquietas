@@ -47,6 +47,7 @@ def refresh_access_token():
     except requests.exceptions.RequestException as e:
         print(f"❌ Error refreshing token: {e}")
         save_activity_to_db(act)
+        print(f"✅ TEST item saved successfully.")
         return None
 
 def get_activities(access_token):
