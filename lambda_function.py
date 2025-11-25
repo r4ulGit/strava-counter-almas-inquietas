@@ -29,15 +29,6 @@ def refresh_access_token():
         'grant_type': "refresh_token"
     }
 
-    act = {
-        'id': 'TEST_ID_123',
-        'name': 'TEST ACTIVITY',
-        'type': 'Run',
-        'distance': 10000,
-        'moving_time': 3600,
-        'start_date': '2025-11-25T10:00:00Z',
-        'kudos_count': 5
-    }
     
     try:
         response = requests.post(AUTH_URL, data=payload)
@@ -46,8 +37,25 @@ def refresh_access_token():
         return response.json()['access_token']
     except requests.exceptions.RequestException as e:
         print(f"❌ Error refreshing token: {e}")
-        save_activity_to_db(act)
+        
+        # --- BLOQUE DE TEST ---
+        print("🧪 Preparando datos de prueba...")
+        
+        act_test = {
+            'id': 'TEST_ID_123',           
+            'name': 'TEST ACTIVITY',
+            'type': 'Run',
+            'distance': 10000,
+            'moving_time': 3600,
+            'start_date': '2025-11-25T10:00:00Z',
+            'kudos_count': 5
+        }
+        
+        print(f"📦 Enviando objeto: {act_test}")
+        
+        save_activity_to_db(act_test)
         print(f"✅ TEST item saved successfully.")
+        
         return None
 
 def get_activities(access_token):
