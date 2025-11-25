@@ -30,14 +30,14 @@ def refresh_access_token():
     }
 
     act = {
-            'activity_id': 'TEST_ID',
-            'name': 'ACTIVITY_NAME',
-            'type': 'ACTIVITY_TYPE',
-            'distance_km': 10.0,
-            'moving_time_seconds': 3600,
-            'start_date': '25/11/2025',
-            'kudos_count': 1
-        }
+        'id': 'TEST_ID_123',
+        'name': 'TEST ACTIVITY',
+        'type': 'Run',
+        'distance': 10000,
+        'moving_time': 3600,
+        'start_date': '2025-11-25T10:00:00Z',
+        'kudos_count': 5
+    }
     
     try:
         response = requests.post(AUTH_URL, data=payload)
