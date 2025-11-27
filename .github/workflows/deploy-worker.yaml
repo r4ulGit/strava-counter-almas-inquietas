@@ -1,0 +1,43 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+      - AWS-integration
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    # 1. Download the code from the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 2. Set up Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.14' # Check python version matches lambda function version
+
+    # 3. Install dependencies
+    # AWS Lambda needs to have the libraries in the same folder as the code.
+    - name: Install dependencies
+      run: |
+        pip install requests -t . 
+
+    # 4. Compress everything into a ZIP file
+    # Exclude files that we don't need like the .git or the workflow configuration
+    - name: Zip the code
+      run: |
+        zip -r deploy_package.zip . -x "*.git*" ".github/*"
+
+    # 5. Deploy to AWS Lambda
+    - name: Deploy to Lambda
+      uses: appleboy/lambda-action@master
+      with:
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws_region: eu-west-1
+        function_name: StravaCounterWorker
+        zip_file: deploy_package.zip
