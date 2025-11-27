@@ -28,11 +28,24 @@ jobs:
         pip install requests -t . 
 
     # 4. Compress everything into a ZIP file
-    # Exclude files that we don't need like the .git or the workflow configuration
+    # AWS Lambda requires the handler file and dependencies at the root of the zip
     - name: Zip the code
       working-directory: worker
       run: |
-        zip -r ../deploy_package.zip . -x "*.git*" ".github/*"
+        # Zip all contents from worker directory to root of zip file
+        zip -r ../deploy_package.zip . \
+          -x "*.git*" \
+          -x ".github/*" \
+          -x "*.actionlint.yaml" \
+          -x "__pycache__/*" \
+          -x "*.pyc" \
+          -x ".gitignore"
+    
+    # 4.5. Verify zip contents (for debugging)
+    - name: Verify zip structure
+      run: |
+        echo "=== Checking zip contents ==="
+        unzip -l deploy_package.zip | grep -E "(strava_retreiver\.py|^Archive:|requests/)" | head -15
 
     # 5. Deploy to AWS Lambda
     - name: Deploy to Lambda
