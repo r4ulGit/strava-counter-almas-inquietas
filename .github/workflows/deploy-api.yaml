@@ -1,0 +1,38 @@
+name: Deploy Backend API
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/backend-setup' # O el nombre de tu rama actual
+    paths:
+      - 'api/**'  # 👈 MAGIA: Solo se ejecuta si tocas archivos dentro de la carpeta 'api'
+
+jobs:
+  deploy_api:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Zip the API code
+      run: |
+        cd api
+        # Comprimimos solo el contenido de la carpeta api
+        zip -r ../api_package.zip . 
+        cd ..
+
+    - name: Deploy to AWS Lambda
+      uses: appleboy/lambda-action@master
+      with:
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws_region: eu-west-1
+        function_name: StravaCounterBackendAPI  # ⚠️ Asegúrate de que coincida con el nombre en AWS
+        zip_file: api_package.zip
