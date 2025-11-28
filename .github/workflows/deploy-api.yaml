@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main
-      - 'feature/backend-setup' # O el nombre de tu rama actual
-    paths:
-      - 'api/**'  # 👈 MAGIA: Solo se ejecuta si tocas archivos dentro de la carpeta 'api'
+      - AWS-integration
+    #paths:
+     # - 'api/**'  # 👈 The workflow will only run if you touch files inside the 'api' folder
 
 jobs:
   deploy_api:
