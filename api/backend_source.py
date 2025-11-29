@@ -58,13 +58,6 @@ def process_activities(event, context):
         # 2. Return HTTP Response
         return {
             'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                # CORS HEADERS (Crucial for the Frontend to access this API)
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            },
             'body': json.dumps(items, cls=DecimalEncoder)
         }
 
