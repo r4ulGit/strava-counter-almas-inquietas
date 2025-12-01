@@ -52,7 +52,7 @@ def get_strava_activities(access_token):
     """ Fetches the most recent activities from the CLUB. """
     headers = {'Authorization': f'Bearer {access_token}'}
     
-    print(f"📡 Fetching URL: {ACTIVITIES_URL}") # <--- DEBUG IMPORTANTE
+    print(f"📡 Fetching URL: {ACTIVITIES_URL}")
     
     try:
         response = requests.get(ACTIVITIES_URL, headers=headers, timeout=10)
