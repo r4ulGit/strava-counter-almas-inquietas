@@ -51,12 +51,11 @@ def refresh_access_token():
 def get_strava_activities(access_token):
     """ Fetches the most recent activities from the CLUB. """
     headers = {'Authorization': f'Bearer {access_token}'}
-    params = {'per_page': 30} 
     
     print(f"📡 Fetching URL: {ACTIVITIES_URL}") # <--- DEBUG IMPORTANTE
     
     try:
-        response = requests.get(ACTIVITIES_URL, headers=headers, params=params, timeout=10)
+        response = requests.get(ACTIVITIES_URL, headers=headers, timeout=10)
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -89,8 +88,7 @@ def save_activity(activity):
             'type': activity.get('type', 'Unknown'),
             'distance_km': Decimal(str(round(activity.get('distance', 0) / 1000, 2))),
             'moving_time_seconds': int(activity.get('moving_time', 0)),
-            'start_date': start_date,
-            'kudos_count': int(activity.get('kudos_count', 0))
+            'start_date': start_date
         }
         table.put_item(Item=item)
         print(f"💾 Saved: {item['name']} (ID: {activity_id[:8]}...)")
