@@ -3,6 +3,7 @@ import json
 import requests
 import boto3
 import hashlib
+from botocore.exceptions import ClientError
 from decimal import Decimal
 from datetime import datetime
 from dotenv import load_dotenv
@@ -73,12 +74,18 @@ def generate_synthetic_id(activity):
     return hashlib.md5(raw_signature.encode('utf-8')).hexdigest()
 
 def save_activity(activity):
+    """
+    Saves an activity ONLY if it doesn't exist yet (preserving the original insertion date).
+    """
     try:
+        # 1. Determine ID
         if 'id' in activity:
             activity_id = str(activity['id'])
         else:
             activity_id = generate_synthetic_id(activity)
 
+        # 2. Handle Date
+        # Since we skip duplicates, this date represents "First Seen At"
         start_date = activity.get('start_date')
         if not start_date:
             start_date = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -91,11 +98,28 @@ def save_activity(activity):
             'moving_time_seconds': int(activity.get('moving_time', 0)),
             'start_date': start_date
         }
-        table.put_item(Item=item)
-        print(f"💾 Saved: {item['name']} (ID: {activity_id[:8]}...)")
+        
+        # 3. Insert with Condition (Fail if exists)
+        table.put_item(
+            Item=item,
+            ConditionExpression='attribute_not_exists(activity_id)'
+        )
+        
+        print(f"💾 Saved NEW: {item['name']} (ID: {activity_id[:8]}...)")
         return True
+
+    except ClientError as e:
+        # Ignore if the error is just "Item already exists"
+        if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+            # Optional: Uncomment next line to log skipped items
+            # print(f"⏭️ Skipped (Already exists): {activity.get('name')}")
+            return False
+        else:
+            print(f"⚠️ DynamoDB Error: {e}")
+            return False
+            
     except Exception as e:
-        print(f"⚠️ Error saving activity: {e}")
+        print(f"⚠️ General Error saving activity: {e}")
         return False
 
 # --- MAIN HANDLER ---
