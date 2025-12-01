@@ -20,7 +20,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.14' # Check python version matches lambda function version
+        python-version: '3.12' # Check python version matches lambda function version
 
     # 3. Install dependencies
     # AWS Lambda needs to have the libraries in the same folder as the code.
