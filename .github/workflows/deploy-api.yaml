@@ -3,10 +3,10 @@ name: Deploy Backend API
 on:
   push:
     branches:
-      - main
+      - master
       - AWS-integration
-    #paths:
-     # - 'api/**'  # 👈 The workflow will only run if you touch files inside the 'api' folder
+    paths:
+      - 'api/**'  # 👈 The workflow will only run if you touch files inside the 'api' folder
 
 jobs:
   deploy_api:

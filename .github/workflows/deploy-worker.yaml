@@ -3,10 +3,10 @@ name: Deploy Worker to AWS Lambda
 on:
   push:
     branches:
-      - main
+      - master
       - AWS-integration
     paths:
-          - 'worker/**' # Only run if the worker folder is changed
+          - 'worker/**' # 👈 The workflow will only run if you touch files inside the 'api' folder
 
 jobs:
   deploy:
