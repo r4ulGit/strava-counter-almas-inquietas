@@ -106,14 +106,14 @@ def save_activity(activity):
             ConditionExpression='attribute_not_exists(activity_id)'
         )
         
-        print(f"💾 Saved NEW: {item['name']} (ID: {activity_id[:8]}...)")
+        print(f"💾 Saved NEW: {item['title']} (ID: {activity_id[:8]}...)")
         return True
 
     except ClientError as e:
         # Ignore if the error is just "Item already exists"
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            # Optional: Uncomment next line to log skipped items
-            # print(f"⏭️ Skipped (Already exists): {activity.get('name')}")
+            # Skipped items
+            print(f"⏭️ Skipped (Already exists): {activity.get('title')}")
             return False
         else:
             print(f"⚠️ DynamoDB Error: {e}")
