@@ -1,10 +1,12 @@
-name: Deploy to AWS Lambda
+name: Deploy Worker to AWS Lambda
 
 on:
   push:
     branches:
       - main
       - AWS-integration
+    paths:
+          - 'worker/**' # Only run if the worker folder is changed
 
 jobs:
   deploy:
@@ -25,8 +27,8 @@ jobs:
     - name: Install dependencies
       working-directory: worker
       run: |
-        pip install requests -t . 
-
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt -t .
     # 4. Compress everything into a ZIP file
     # AWS Lambda requires the handler file and dependencies at the root of the zip
     - name: Zip the code
