@@ -89,11 +89,12 @@ def save_activity(activity):
         start_date = activity.get('start_date')
         if not start_date:
             start_date = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-
+        athlete = activity.get('athlete', {})
         item = {
             'activity_id': activity_id,
-            'name': activity.get('name', 'Unknown'),
+            'title': activity.get('name', 'Unknown'),
             'type': activity.get('type', 'Unknown'),
+            'athlete':f"{athlete.get('firstname', 'Unknown')} {athlete.get('lastname', '')}",
             'distance_km': Decimal(str(round(activity.get('distance', 0) / 1000, 2))),
             'moving_time_seconds': int(activity.get('moving_time', 0)),
             'start_date': start_date
