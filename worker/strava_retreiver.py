@@ -51,11 +51,12 @@ def refresh_access_token():
 def get_strava_activities(access_token):
     """ Fetches the most recent activities from the CLUB. """
     headers = {'Authorization': f'Bearer {access_token}'}
+    params = {'per_page': 200}
     
     print(f"📡 Fetching URL: {ACTIVITIES_URL}")
     
     try:
-        response = requests.get(ACTIVITIES_URL, headers=headers, timeout=10)
+        response = requests.get(ACTIVITIES_URL, headers=headers, params=params, timeout=10)
         response.raise_for_status()
         return response.json()
     except Exception as e:
