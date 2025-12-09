@@ -25,7 +25,6 @@ def generate_synthetic_id(activity):
         f"{activity.get('elapsed_time')}_"
         f"{activity.get('total_elevation_gain')}_"
         f"{activity.get('type')}_"
-        f"{datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}"
     )
     return hashlib.md5(raw_signature.encode('utf-8')).hexdigest()
 
