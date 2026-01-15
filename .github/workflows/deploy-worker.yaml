@@ -1,0 +1,60 @@
+name: Deploy Worker to AWS Lambda
+
+on:
+  push:
+    branches:
+      - master
+      - AWS-integration
+    paths:
+          - 'worker/**' # 👈 The workflow will only run if you touch files inside the 'api' folder
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    # 1. Download the code from the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 2. Set up Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12' # Check python version matches lambda function version
+
+    # 3. Install dependencies
+    # AWS Lambda needs to have the libraries in the same folder as the code.
+    - name: Install dependencies
+      working-directory: worker
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt -t .
+    # 4. Compress everything into a ZIP file
+    # AWS Lambda requires the handler file and dependencies at the root of the zip
+    - name: Zip the code
+      working-directory: worker
+      run: |
+        # Zip all contents from worker directory to root of zip file
+        zip -r ../deploy_package.zip . \
+          -x "*.git*" \
+          -x ".github/*" \
+          -x "*.actionlint.yaml" \
+          -x "__pycache__/*" \
+          -x "*.pyc" \
+          -x ".gitignore"
+    
+    # 4.5. Verify zip contents (for debugging)
+    - name: Verify zip structure
+      run: |
+        echo "=== Checking zip contents ==="
+        unzip -l deploy_package.zip | grep -E "(strava_retreiver\.py|^Archive:|requests/)" | head -15
+
+    # 5. Deploy to AWS Lambda
+    - name: Deploy to Lambda
+      uses: appleboy/lambda-action@master
+      with:
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws_region: eu-west-1
+        function_name: StravaCounterWorker
+        zip_file: deploy_package.zip
