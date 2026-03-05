@@ -1,35 +1,37 @@
 import { useState, useEffect } from 'react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './App.css'
 
-// ⚠️ PASTE YOUR LAMBDA BACKEND URL HERE (Function URL)
-const API_URL = "https://4tmnmle654hfpiku73chw3p7ia0tbyjg.lambda-url.eu-west-1.on.aws/";
+// API CONFIGURATION
+const API_URL = import.meta.env.DEV 
+  ? "http://127.0.0.1:5000/" 
+  : "https://4tmnmle654hfpiku73chw3p7ia0tbyjg.lambda-url.eu-west-1.on.aws/";
 
 function App() {
-  const [data, setData] = useState([]);
-  const [chartData, setChartData] = useState([]);
+  const [stats, setStats] = useState({ 
+    total_km: 0, 
+    matches_found: 0,
+    config: { goal_km: 500, filter_word: 'Run' } 
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // --- WIDGET DETECTION ---
+  const searchParams = new URLSearchParams(window.location.search);
+  const isWidget = searchParams.get('mode') === 'widget';
 
   useEffect(() => {
     fetch(API_URL)
       .then(response => {
         if (!response.ok) {
-            // Try to read the error message from the backend if possible
             return response.text().then(text => { throw new Error(text || 'Network response was not ok') })
         }
         return response.json();
       })
-      .then(stravaData => {
-        console.log("Data received from Backend:", stravaData); // Debugging line
-
-        // Safety check: Ensure we received an Array
-        if (!Array.isArray(stravaData)) {
-            throw new Error("Backend format error: Expected a list of activities.");
+      .then(data => {
+        if (typeof data.total_km === 'undefined') {
+             throw new Error("Backend format error: Missing 'total_km'.");
         }
-
-        setData(stravaData); 
-        processDataForChart(stravaData); 
+        setStats(data);
         setLoading(false);
       })
       .catch(error => {
@@ -39,66 +41,105 @@ function App() {
       });
   }, []);
 
-  const processDataForChart = (items) => {
-    // Safety check inside the function too
-    if (!items || !Array.isArray(items)) return;
+  const goal = stats.config.goal_km;
+  const percentage = Math.min(Math.max((stats.total_km / goal) * 100, 0), 100);
 
-    const counts = {};
-    items.forEach(item => {
-      const type = item.type || 'Other';
-      counts[type] = (counts[type] || 0) + 1;
-    });
+  // --- STYLES FOR WIDGET MODE ---
+  const containerStyle = isWidget ? {
+    padding: '0px',
+    backgroundColor: 'transparent',
+    maxWidth: '100%'
+  } : {
+    marginTop: '40px', 
+    padding: '40px', 
+    backgroundColor: '#2a2a2a', 
+    borderRadius: '15px',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+    maxWidth: '800px',
+    marginLeft: 'auto',
+    marginRight: 'auto'
+  };
 
-    const processed = Object.keys(counts).map(key => ({
-      name: key,
-      count: counts[key]
-    }));
-    
-    setChartData(processed);
-  }
-
-  if (loading) return <h2>⏳ Loading Strava data...</h2>;
-  if (error) return (
-    <div style={{color: 'red', padding: '20px', border: '1px solid red'}}>
-        <h2>❌ Error detected:</h2>
-        <p>{error}</p>
-        <p><small>Check the console (F12) for more details.</small></p>
-    </div>
-  );
+  if (loading) return <h2 style={{color: isWidget ? '#333' : '#fff'}}>⏳ Loading...</h2>;
+  if (error) return <div style={{color: 'red'}}>❌ Error: {error}</div>;
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>📊 CONTADOR ALMAS INQUETAS</h1>
+    <div style={{ 
+        padding: isWidget ? '10px' : '40px', 
+        fontFamily: 'Arial, sans-serif' 
+    }}>
+      {!isWidget && <h1>🏃‍♂️ Almas Inquietas Challenge</h1>}
       
-      <div style={{ marginBottom: '30px' }}>
-        <h2>Total Activities: <span style={{ color: '#fc4c02' }}>{data.length}</span></h2>
-      </div>
+      <div style={containerStyle}>
+        
+        <h2 style={{ 
+            fontSize: isWidget ? '1.2rem' : '1.8rem', 
+            color: isWidget ? '#333' : '#ccc',
+            margin: 0,
+            textAlign: isWidget ? 'left' : 'center'
+        }}>
+          Total Distance
+        </h2>
+        
+        <div style={{ 
+            fontSize: isWidget ? '3.5rem' : '6rem',
+            fontWeight: 'bold', 
+            color: '#fc4c02', 
+            margin: isWidget ? '10px 0' : '20px 0',
+            lineHeight: 1,
+            textAlign: isWidget ? 'left' : 'center'
+        }}>
+          {stats.total_km.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} 
+          <span style={{fontSize: '1.5rem', color: isWidget ? '#555' : '#fff', marginLeft: '10px'}}>km</span>
+        </div>
 
-      <div style={{ width: '100%', height: 400 }}>
-        <h3>Breakdown by Sport</h3>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{ top: 5, right: 30, left: 20, bottom: 40 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" stroke="#ccc"/>
-            <YAxis allowDecimals={false} stroke="#ccc"/> 
-            <Tooltip cursor={false} contentStyle={{ border: '1px solid #ccc', borderRadius: 4, padding: 12 }}/>
-            <Legend verticalAlign="top" height={36}/>
-            <Bar dataKey="count" fill="#fc4c02" name="Activities" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+        {/* --- PROGRESS BAR SECTION --- */}
+        <div style={{ marginTop: '30px', marginBottom: '20px', position: 'relative' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: isWidget ? '#666' : '#888', marginBottom: '10px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                <span>0 km</span>
+                <span>GOAL: {goal.toLocaleString()} km</span>
+            </div>
 
-      <h3>Recent Activities</h3>
-      <ul>
-        {data.slice(0, 5).map(act => (
-          <li key={act.activity_id || act.strava_activities_id}>
-             {act.type}: {act.name} ({act.distance_km} km)
-          </li>
-        ))}
-      </ul>
+            <div style={{ 
+                height: '16px', 
+                backgroundColor: isWidget ? '#e0e0e0' : '#444',
+                borderRadius: '8px', 
+                width: '100%',
+                position: 'relative'
+            }}>
+                <div style={{ 
+                    width: `${percentage}%`, 
+                    height: '100%', 
+                    backgroundColor: '#fc4c02', 
+                    borderRadius: '8px',
+                    transition: 'width 1s ease-in-out'
+                }}></div>
+
+                <div style={{ 
+                    position: 'absolute', 
+                    left: `${percentage}%`, 
+                    top: '-30px', 
+                    transform: 'translateX(-50%) scaleX(-1)', 
+                    fontSize: '2rem',
+                    transition: 'left 1s ease-in-out',
+                    lineHeight: 1
+                }}>
+                    🏃
+                </div>
+            </div>
+
+            <p style={{ marginTop: '10px', color: isWidget ? '#666' : '#aaa', fontSize: '0.9rem' }}>
+                Progress: <strong style={{color: isWidget ? '#000' : '#fff'}}>{percentage.toFixed(1)}%</strong>
+            </p>
+        </div>
+        
+        {!isWidget && (
+            <p style={{ fontSize: '1rem', color: '#666', marginTop: '30px' }}>
+            Data collected from <strong style={{color: '#888'}}>{stats.matches_found}</strong> activities containing "<strong style={{color: '#fff'}}>{stats.config.filter_word}</strong>"
+            </p>
+        )}
+      </div>
     </div>
   )
 }

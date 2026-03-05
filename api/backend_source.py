@@ -1,64 +1,86 @@
 import json
 import os
 import boto3
+from pathlib import Path
 from decimal import Decimal
-from boto3.dynamodb.conditions import Key
+from dotenv import load_dotenv
+
+# --- VARIABLE LOADING ---
+current_dir = Path(__file__).resolve().parent
+env_path = current_dir / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # --- CONFIGURATION ---
-DYNAMODB_TABLE_NAME = os.environ.get('DYNAMODB_TABLE_NAME', 'strava_activities')
+DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'strava_activities')
+AWS_REGION = os.getenv('AWS_REGION', 'eu-west-1')
+
+
+TITLE_FILTER = os.getenv('TITLE_FILTER', 'Run')
+try:
+    GOAL_KM = float(os.getenv('GOAL_KM', 500))
+except (ValueError, TypeError):
+    GOAL_KM = 500.0
 
 # Initialize DynamoDB resource
-dynamodb = boto3.resource('dynamodb', region_name='eu-west-1') # Adjust region if needed
-table = dynamodb.Table(DYNAMODB_TABLE_NAME)
+try:
+    dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
+    table = dynamodb.Table(DYNAMODB_TABLE_NAME)
+except Exception as e:
+    print(f"❌ Error initializing DynamoDB: {e}")
 
 class DecimalEncoder(json.JSONEncoder):
-    """
-    Helper class to convert DynamoDB Decimal types to standard Python floats/ints
-    so they can be serialized to JSON.
-    """
     def default(self, obj):
         if isinstance(obj, Decimal):
-            # Check if it's an integer or a float
             return int(obj) if obj % 1 == 0 else float(obj)
         return super(DecimalEncoder, self).default(obj)
 
 def get_all_activities():
-    """
-    Scans the table to return all activities.
-    For production with thousands of items, 'Query' is better than 'Scan'.
-    For a personal project, 'Scan' is perfectly fine and free.
-    """
     try:
         response = table.scan()
         data = response.get('Items', [])
-        
-        # Handling pagination if data > 1MB (Optional but good practice)
         while 'LastEvaluatedKey' in response:
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response.get('Items', []))
-            
-        # Sort by date descending (newest first)
-        # We assume start_date is in ISO format (YYYY-MM-DD...) which sorts correctly as string
-        data.sort(key=lambda x: x.get('start_date', ''), reverse=True)
-        
         return data
     except Exception as e:
         print(f"❌ Database Error: {str(e)}")
         raise e
 
 def process_activities(event, context):
-    print("🚀 API Request received")
+    print(f"🚀 API Request received. Filter: '{TITLE_FILTER}', Goal: {GOAL_KM}km")
     
     try:
-        # 1. Fetch data from DB
+        # 1. Fetch data
         items = get_all_activities()
         
-        print(f"✅ Retrieved {len(items)} items from DB.")
+        # 2. Filter and Sum
+        total_km = 0
+        match_count = 0
+        filter_lower = TITLE_FILTER.lower()
+        
+        for item in items:
+            title = item.get('type', '').lower()
+            # Dynamic filtering based on environment variable
+            if filter_lower in title:
+                distance = float(item.get('distance_km', 0))
+                total_km += distance
+                match_count += 1
+        
+        print(f"📊 Result: {match_count} items with '{TITLE_FILTER}'. Total: {total_km} km.")
 
-        # 2. Return HTTP Response
+        # 3. Create Response (Including config data for Frontend)
+        response_data = {
+            "total_km": total_km,
+            "matches_found": match_count,
+            "config": {
+                "goal_km": GOAL_KM,
+                "filter_word": TITLE_FILTER
+            }
+        }
+
         return {
             'statusCode': 200,
-            'body': json.dumps(items, cls=DecimalEncoder)
+            'body': json.dumps(response_data, cls=DecimalEncoder)
         }
 
     except Exception as e:
@@ -67,3 +89,30 @@ def process_activities(event, context):
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})
         }
+
+# --- LOCAL SERVER ---
+if __name__ == "__main__":
+    try:
+        from flask import Flask, Response
+        from flask_cors import CORS
+    except ImportError:
+        print("❌ Error: Install Flask with 'pip install flask flask-cors'")
+        exit(1)
+
+    app = Flask(__name__)
+    CORS(app) 
+
+    print("\n🌍 STARTING LOCAL SERVER...")
+    print(f"   👉 Config: Filter='{TITLE_FILTER}', Goal={GOAL_KM}km")
+    print("   👉 Listening at: http://127.0.0.1:5000\n")
+
+    @app.route("/", methods=['GET'])
+    def local_handler():
+        result = process_activities(None, None)
+        return Response(
+            response=result['body'], 
+            status=result['statusCode'], 
+            mimetype='application/json'
+        )
+
+    app.run(port=5000, debug=True)
