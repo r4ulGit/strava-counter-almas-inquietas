@@ -53,6 +53,64 @@ def process_activities(event, context):
         # 1. Fetch data
         items = get_all_activities()
         
+        # 2. Filter, Sum and Collect
+        total_km = 0
+        match_count = 0
+        filter_lower = TITLE_FILTER.lower()
+        matched_activities = []
+        
+        for item in items:
+            title = item.get('type', '').lower()
+            
+            # Dynamic filtering based on environment variable
+            if filter_lower in title:
+                distance = float(item.get('distance_km', 0))
+                total_km += distance
+                match_count += 1
+                
+                # Storing filtered activities details
+                matched_activities.append({
+                    "id": item.get('activity_id'),
+                    "title": item.get('title'),
+                    "athlete": item.get('athlete'),
+                    "distance_km": distance,
+                    "date": item.get('start_date')
+                })
+        
+        print(f"📊 Result: {match_count} items with '{TITLE_FILTER}'. Total: {total_km} km.")
+
+        # Sorting activities by date (from newest to oldest)
+        matched_activities.sort(key=lambda x: x.get('date', ''), reverse=True)
+        last_5_act = matched_activities[:5]
+
+        # 3. Create Response (Including last 5 activities and config data)
+        response_data = {
+            "total_km": total_km,
+            "matches_found": match_count,
+            "last_5_act": last_5_act,
+            "config": {
+                "goal_km": GOAL_KM,
+                "filter_word": TITLE_FILTER
+            }
+        }
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps(response_data, cls=DecimalEncoder)
+        }
+
+    except Exception as e:
+        print(f"🔥 Critical Error: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)})
+        }
+    print(f"🚀 API Request received. Filter: '{TITLE_FILTER}', Goal: {GOAL_KM}km")
+    
+    try:
+        # 1. Fetch data
+        items = get_all_activities()
+        
         # 2. Filter and Sum
         total_km = 0
         match_count = 0

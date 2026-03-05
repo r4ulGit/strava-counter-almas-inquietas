@@ -10,6 +10,7 @@ function App() {
   const [stats, setStats] = useState({ 
     total_km: 0, 
     matches_found: 0,
+    last_5_act: [], // Inicializamos la lista vacía
     config: { goal_km: 500, filter_word: 'Run' } 
   });
   const [loading, setLoading] = useState(true);
@@ -41,7 +42,7 @@ function App() {
       });
   }, []);
 
-  const goal = stats.config.goal_km;
+  const goal = stats.config?.goal_km || 500;
   const percentage = Math.min(Math.max((stats.total_km / goal) * 100, 0), 100);
 
   // --- STYLES FOR WIDGET MODE ---
@@ -72,6 +73,7 @@ function App() {
       
       <div style={containerStyle}>
         
+        {/* --- CONTADOR PRINCIPAL --- */}
         <h2 style={{ 
             fontSize: isWidget ? '1.2rem' : '1.8rem', 
             color: isWidget ? '#333' : '#ccc',
@@ -95,7 +97,6 @@ function App() {
 
         {/* --- PROGRESS BAR SECTION --- */}
         <div style={{ marginTop: '30px', marginBottom: '20px', position: 'relative' }}>
-            
             <div style={{ display: 'flex', justifyContent: 'space-between', color: isWidget ? '#666' : '#888', marginBottom: '10px', fontSize: '0.8rem', fontWeight: 'bold' }}>
                 <span>0 km</span>
                 <span>GOAL: {goal.toLocaleString()} km</span>
@@ -139,6 +140,64 @@ function App() {
             Data collected from <strong style={{color: '#888'}}>{stats.matches_found}</strong> activities containing "<strong style={{color: '#fff'}}>{stats.config.filter_word}</strong>"
             </p>
         )}
+
+        {/* --- ÚLTIMAS 5 ACTIVIDADES --- */}
+        {stats.last_5_act && stats.last_5_act.length > 0 && (
+          <div style={{ marginTop: '40px', textAlign: 'left' }}>
+            <h3 style={{ 
+                color: isWidget ? '#333' : '#ccc', 
+                borderBottom: `1px solid ${isWidget ? '#ddd' : '#555'}`, 
+                paddingBottom: '10px',
+                fontSize: '1.2rem'
+            }}>
+              Últimas aportaciones
+            </h3>
+            
+            <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+              {stats.last_5_act.map((act, index) => {
+                // Formateamos la fecha para que se lea mejor (ej. 15/10/2023)
+                const dateObj = new Date(act.date);
+                const formattedDate = isNaN(dateObj) ? '' : dateObj.toLocaleDateString('es-ES');
+
+                return (
+                  <li key={index} style={{
+                    backgroundColor: isWidget ? '#f9f9f9' : '#333',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    marginTop: '10px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}>
+                    <div style={{ paddingRight: '15px' }}>
+                      <strong style={{ 
+                          color: isWidget ? '#000' : '#fff', 
+                          fontSize: '1rem', 
+                          display: 'block', 
+                          marginBottom: '4px' 
+                      }}>
+                        {act.title}
+                      </strong>
+                      <div style={{ color: '#888', fontSize: '0.85rem' }}>
+                        {formattedDate} {act.athlete ? ` • 👤 ${act.athlete}` : ''}
+                      </div>
+                    </div>
+                    <div style={{ 
+                        fontWeight: 'bold', 
+                        color: '#fc4c02', 
+                        fontSize: '1.2rem',
+                        whiteSpace: 'nowrap'
+                    }}>
+                      +{act.distance_km.toFixed(2)} km
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
       </div>
     </div>
   )
