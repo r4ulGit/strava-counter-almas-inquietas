@@ -1,20 +1,29 @@
 import os
+import json
 from dotenv import load_dotenv
 
 # Load environment variables (for local testing)
 load_dotenv()
 
-# --- ENVIRONMENT VARIABLES ---
+# --- Strava OAuth (shared across all clubs) ---
 STRAVA_CLIENT_ID = os.getenv('STRAVA_CLIENT_ID')
 STRAVA_CLIENT_SECRET = os.getenv('STRAVA_CLIENT_SECRET')
 STRAVA_REFRESH_TOKEN = os.getenv('STRAVA_REFRESH_TOKEN')
-STRAVA_CLUB_ID = os.getenv('STRAVA_CLUB_ID')
-DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'strava_activities')
+
+# --- Multi-Club: JSON array of club IDs ---
+# Lambda env var example: STRAVA_CLUB_IDS=["1793883","9876543","1234567"]
+_raw_club_ids = os.getenv('STRAVA_CLUB_IDS', '[]')
+try:
+    STRAVA_CLUB_IDS = json.loads(_raw_club_ids)
+except json.JSONDecodeError:
+    print(f"⚠️ Warning: Could not parse STRAVA_CLUB_IDS='{_raw_club_ids}'. Defaulting to empty list.")
+    STRAVA_CLUB_IDS = []
+
+# --- DynamoDB ---
+DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'ACTIVUM_ACT')
+ATHLETES_TABLE_NAME = os.getenv('ATHLETES_TABLE_NAME', 'ACTIVUM_USR')
 AWS_REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
-# --- CONSTANTS & URLS ---
+# --- Constants ---
 AUTH_URL = "https://www.strava.com/oauth/token"
-
-# Construct URL safely to avoid import errors if env var is missing during build
-_club_id_safe = STRAVA_CLUB_ID if STRAVA_CLUB_ID else "UNKNOWN_CLUB_ID"
-ACTIVITIES_URL = f"https://www.strava.com/api/v3/clubs/{_club_id_safe}/activities"
+ACTIVITIES_URL_TEMPLATE = "https://www.strava.com/api/v3/clubs/{club_id}/activities"

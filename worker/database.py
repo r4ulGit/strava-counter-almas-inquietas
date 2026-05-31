@@ -7,16 +7,19 @@ import config
 
 # Initialize DynamoDB Resource
 dynamodb = boto3.resource('dynamodb', region_name=config.AWS_REGION)
-table = dynamodb.Table(config.DYNAMODB_TABLE_NAME)
+activities_table = dynamodb.Table(config.DYNAMODB_TABLE_NAME)
+athletes_table = dynamodb.Table(config.ATHLETES_TABLE_NAME)
+
 
 def generate_synthetic_id(activity):
     """
     Generates a deterministic ID based on activity properties.
-    Signature: Athlete + Name + Distance + MovingTime + ElapsedTime + Elevation + Type + StartDate
+    Needed because the Strava Club API does not return activity IDs.
+    Signature: Athlete + Name + Distance + MovingTime + ElapsedTime + Type
     """
     athlete = activity.get('athlete', {})
     athlete_name = f"{athlete.get('firstname', 'Unknown')}{athlete.get('lastname', '')}"
-    
+
     raw_signature = (
         f"{athlete_name}_"
         f"{activity.get('name')}_"
@@ -28,23 +31,24 @@ def generate_synthetic_id(activity):
     )
     return hashlib.md5(raw_signature.encode('utf-8')).hexdigest()
 
+
 def save_activity(activity):
     """
-    Parses and saves a single activity into DynamoDB.
-    Returns True if saved, False if skipped or error.
+    Parses and saves a single activity into the ACTIVUM_ACT DynamoDB table.
+    Uses a conditional write to prevent duplicates.
+
+    Returns:
+        True if the activity was saved (new), False if skipped or error.
     """
     try:
-        # 1. Determine ID
-        if 'id' in activity:
-            activity_id = str(activity['id'])
-        else:
-            activity_id = generate_synthetic_id(activity)
+        # 1. Determine ID (synthetic since club API has none)
+        activity_id = generate_synthetic_id(activity)
 
-        # 2. Handle Date
+        # 2. Handle Date — club API does not return start_date
         start_date = activity.get('start_date')
         if not start_date:
             start_date = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-        
+
         athlete = activity.get('athlete', {})
 
         # 3. Create Item
@@ -52,30 +56,62 @@ def save_activity(activity):
             'activity_id': activity_id,
             'title': activity.get('name', 'Unknown'),
             'type': activity.get('type', 'Unknown'),
-            'athlete': f"{athlete.get('firstname', 'Unknown')} {athlete.get('lastname', '')}",
+            'sport_type': activity.get('sport_type', activity.get('type', 'Unknown')),
+            'athlete': f"{athlete.get('firstname', 'Unknown')} {athlete.get('lastname', '')}".strip(),
             'distance_km': Decimal(str(round(activity.get('distance', 0) / 1000, 2))),
             'moving_time_seconds': int(activity.get('moving_time', 0)),
-            'start_date': start_date
+            'total_elevation_gain': Decimal(str(round(activity.get('total_elevation_gain', 0), 1))),
+            'start_date': start_date,
         }
-        
-        # 4. Insert with Condition (Fail if exists to preserve original date)
-        table.put_item(
+
+        # 4. Insert with Condition (fail silently if exists)
+        activities_table.put_item(
             Item=item,
             ConditionExpression='attribute_not_exists(activity_id)'
         )
-        
-        print(f"💾 Saved NEW: {item['title']} (ID: {activity_id[:8]}...)")
+
+        print(f"💾 Saved NEW: {item['title']} by {item['athlete']} ({item['distance_km']} km)")
         return True
 
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            print(f"⏭️ Skipped (Already exists): {activity.get('name')}")
-            # Item exists, silently skip
+            print(f"⏭️  Skipped (already exists): {activity.get('name')}")
             return False
         else:
-            print(f"⚠️ DynamoDB Error: {e}")
+            print(f"⚠️ DynamoDB Error saving activity: {e}")
             return False
-            
+
     except Exception as e:
         print(f"⚠️ General Error saving activity: {e}")
         return False
+
+
+def upsert_athlete(activity):
+    """
+    Updates the athlete's record in ACTIVUM_USR:
+    - SET lastIncrement = this activity's distance_km
+    - ADD currentKm += distance_km (atomic, prevents race conditions)
+
+    Only called when an activity is confirmed NEW (save_activity returned True),
+    ensuring we never double-count an athlete's km.
+
+    Args:
+        activity: A raw Strava Club API activity dict.
+    """
+    try:
+        athlete = activity.get('athlete', {})
+        athlete_name = f"{athlete.get('firstname', 'Unknown')} {athlete.get('lastname', '')}".strip()
+        distance_km = Decimal(str(round(activity.get('distance', 0) / 1000, 2)))
+
+        athletes_table.update_item(
+            Key={'athlete_name': athlete_name},
+            UpdateExpression='SET lastIncrement = :inc ADD currentKm :km',
+            ExpressionAttributeValues={
+                ':inc': distance_km,
+                ':km': distance_km,
+            }
+        )
+        print(f"👤 Updated athlete: {athlete_name} (+{distance_km} km)")
+
+    except Exception as e:
+        print(f"⚠️ Error updating athlete '{athlete_name}': {e}")

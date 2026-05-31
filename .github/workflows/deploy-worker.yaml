@@ -4,9 +4,8 @@ on:
   push:
     branches:
       - master
-      - AWS-integration
     paths:
-          - 'worker/**' # 👈 The workflow will only run if you touch files inside the 'api' folder
+      - 'worker/**'  # Only triggers on changes inside the worker folder
 
 jobs:
   deploy:
@@ -20,41 +19,41 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12' # Check python version matches lambda function version
+        python-version: '3.12'
 
     # 3. Install dependencies
-    # AWS Lambda needs to have the libraries in the same folder as the code.
+    # AWS Lambda needs libraries bundled alongside the code
     - name: Install dependencies
       working-directory: worker
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt -t .
-    # 4. Compress everything into a ZIP file
-    # AWS Lambda requires the handler file and dependencies at the root of the zip
+
+    # 4. Compress code into a ZIP (excluding dev/local-only files)
     - name: Zip the code
       working-directory: worker
       run: |
-        # Zip all contents from worker directory to root of zip file
         zip -r ../deploy_package.zip . \
           -x "*.git*" \
           -x ".github/*" \
           -x "*.actionlint.yaml" \
           -x "__pycache__/*" \
           -x "*.pyc" \
-          -x ".gitignore"
-    
+          -x ".gitignore" \
+          -x ".env"
+
     # 4.5. Verify zip contents (for debugging)
     - name: Verify zip structure
       run: |
         echo "=== Checking zip contents ==="
-        unzip -l deploy_package.zip | grep -E "(strava_retreiver\.py|^Archive:|requests/)" | head -15
+        unzip -l deploy_package.zip | grep -E "(strava_retreiver\.py|config\.py|database\.py|strava_client\.py|requests/)" | head -20
 
-    # 5. Deploy to AWS Lambda
+    # 5. Deploy to AWS Lambda (ActivumCounterWorker)
     - name: Deploy to Lambda
       uses: appleboy/lambda-action@master
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: eu-west-1
-        function_name: StravaCounterWorker
+        function_name: ActivumCounterWorker
         zip_file: deploy_package.zip

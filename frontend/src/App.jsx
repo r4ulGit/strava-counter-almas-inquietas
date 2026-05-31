@@ -1,206 +1,231 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import './App.css'
+import { API_URL } from './config.js'
+import { getAuthHeader } from './apiAuth.js'
+import ActivityCarousel from './components/ActivityCarousel.jsx'
 
-// API CONFIGURATION
-const API_URL = import.meta.env.DEV 
-  ? "http://127.0.0.1:5000/" 
-  : "https://4tmnmle654hfpiku73chw3p7ia0tbyjg.lambda-url.eu-west-1.on.aws/";
+// ---------------------------------------------------------------------------
+// Medal helper
+// ---------------------------------------------------------------------------
+function getMedal(rank) {
+  if (rank === 1) return { emoji: '🥇', cls: 'medal top-1' };
+  if (rank === 2) return { emoji: '🥈', cls: 'medal top-2' };
+  if (rank === 3) return { emoji: '🥉', cls: 'medal top-3' };
+  return { emoji: String(rank), cls: '' };
+}
 
-function App() {
-  const [stats, setStats] = useState({ 
-    total_km: 0, 
-    matches_found: 0,
-    last_5_act: [], // Inicializamos la lista vacía
-    config: { goal_km: 500, filter_word: 'Run' } 
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // --- WIDGET DETECTION ---
-  const searchParams = new URLSearchParams(window.location.search);
-  const isWidget = searchParams.get('mode') === 'widget';
-
-  useEffect(() => {
-    fetch(API_URL)
-      .then(response => {
-        if (!response.ok) {
-            return response.text().then(text => { throw new Error(text || 'Network response was not ok') })
-        }
-        return response.json();
-      })
-      .then(data => {
-        if (typeof data.total_km === 'undefined') {
-             throw new Error("Backend format error: Missing 'total_km'.");
-        }
-        setStats(data);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error("Error fetching data:", error);
-        setError(error.message);
-        setLoading(false);
-      });
-  }, []);
-
-  const goal = stats.config?.goal_km || 500;
-  const percentage = Math.min(Math.max((stats.total_km / goal) * 100, 0), 100);
-
-  // --- STYLES FOR WIDGET MODE ---
-  const containerStyle = isWidget ? {
-    padding: '0px',
-    backgroundColor: 'transparent',
-    maxWidth: '100%'
-  } : {
-    marginTop: '40px', 
-    padding: '40px', 
-    backgroundColor: '#2a2a2a', 
-    borderRadius: '15px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-    maxWidth: '800px',
-    marginLeft: 'auto',
-    marginRight: 'auto'
-  };
-
-  if (loading) return <h2 style={{color: isWidget ? '#333' : '#fff'}}>⏳ Loading...</h2>;
-  if (error) return <div style={{color: 'red'}}>❌ Error: {error}</div>;
-
+// ---------------------------------------------------------------------------
+// Loading skeleton
+// ---------------------------------------------------------------------------
+function LoadingSkeleton() {
   return (
-    <div style={{ 
-        padding: isWidget ? '10px' : '40px', 
-        fontFamily: 'Arial, sans-serif' 
-    }}>
-      {!isWidget && <h1>🏃‍♂️ Almas Inquietas Challenge</h1>}
-      
-      <div style={containerStyle}>
-        
-        {/* --- CONTADOR PRINCIPAL --- */}
-        <h2 style={{ 
-            fontSize: isWidget ? '1.2rem' : '1.8rem', 
-            color: isWidget ? '#333' : '#ccc',
-            margin: 0,
-            textAlign: isWidget ? 'left' : 'center'
-        }}>
-          Total Distance
-        </h2>
-        
-        <div style={{ 
-            fontSize: isWidget ? '3.5rem' : '6rem',
-            fontWeight: 'bold', 
-            color: '#fc4c02', 
-            margin: isWidget ? '10px 0' : '20px 0',
-            lineHeight: 1,
-            textAlign: isWidget ? 'left' : 'center'
-        }}>
-          {stats.total_km.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} 
-          <span style={{fontSize: '1.5rem', color: isWidget ? '#555' : '#fff', marginLeft: '10px'}}>km</span>
-        </div>
-
-        {/* --- PROGRESS BAR SECTION --- */}
-        <div style={{ marginTop: '30px', marginBottom: '20px', position: 'relative' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: isWidget ? '#666' : '#888', marginBottom: '10px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                <span>0 km</span>
-                <span>GOAL: {goal.toLocaleString()} km</span>
-            </div>
-
-            <div style={{ 
-                height: '16px', 
-                backgroundColor: isWidget ? '#e0e0e0' : '#444',
-                borderRadius: '8px', 
-                width: '100%',
-                position: 'relative'
-            }}>
-                <div style={{ 
-                    width: `${percentage}%`, 
-                    height: '100%', 
-                    backgroundColor: '#fc4c02', 
-                    borderRadius: '8px',
-                    transition: 'width 1s ease-in-out'
-                }}></div>
-
-                <div style={{ 
-                    position: 'absolute', 
-                    left: `${percentage}%`, 
-                    top: '-30px', 
-                    transform: 'translateX(-50%) scaleX(-1)', 
-                    fontSize: '2rem',
-                    transition: 'left 1s ease-in-out',
-                    lineHeight: 1
-                }}>
-                    🏃
-                </div>
-            </div>
-
-            <p style={{ marginTop: '10px', color: isWidget ? '#666' : '#aaa', fontSize: '0.9rem' }}>
-                Progress: <strong style={{color: isWidget ? '#000' : '#fff'}}>{percentage.toFixed(1)}%</strong>
-            </p>
-        </div>
-        
-        {!isWidget && (
-            <p style={{ fontSize: '1rem', color: '#666', marginTop: '30px' }}>
-            Data collected from <strong style={{color: '#888'}}>{stats.matches_found}</strong> activities containing "<strong style={{color: '#fff'}}>{stats.config.filter_word}</strong>"
-            </p>
-        )}
-
-        {/* --- ÚLTIMAS 5 ACTIVIDADES --- */}
-        {stats.last_5_act && stats.last_5_act.length > 0 && (
-          <div style={{ marginTop: '40px', textAlign: 'left' }}>
-            <h3 style={{ 
-                color: isWidget ? '#333' : '#ccc', 
-                borderBottom: `1px solid ${isWidget ? '#ddd' : '#555'}`, 
-                paddingBottom: '10px',
-                fontSize: '1.2rem'
-            }}>
-              Últimas aportaciones
-            </h3>
-            
-            <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
-              {stats.last_5_act.map((act, index) => {
-                // Formateamos la fecha para que se lea mejor (ej. 15/10/2023)
-                const dateObj = new Date(act.date);
-                const formattedDate = isNaN(dateObj) ? '' : dateObj.toLocaleDateString('es-ES');
-
-                return (
-                  <li key={index} style={{
-                    backgroundColor: isWidget ? '#f9f9f9' : '#333',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    marginTop: '10px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}>
-                    <div style={{ paddingRight: '15px' }}>
-                      <strong style={{ 
-                          color: isWidget ? '#000' : '#fff', 
-                          fontSize: '1rem', 
-                          display: 'block', 
-                          marginBottom: '4px' 
-                      }}>
-                        {act.title}
-                      </strong>
-                      <div style={{ color: '#888', fontSize: '0.85rem' }}>
-                        {formattedDate} {act.athlete ? ` • 👤 ${act.athlete}` : ''}
-                      </div>
-                    </div>
-                    <div style={{ 
-                        fontWeight: 'bold', 
-                        color: '#fc4c02', 
-                        fontSize: '1.2rem',
-                        whiteSpace: 'nowrap'
-                    }}>
-                      +{act.distance_km.toFixed(2)} km
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-
+    <div className="stagger">
+      <div className="glass-card counter-section">
+        <div className="skeleton skeleton-block" style={{ width: '40%', margin: '0 auto 12px' }} />
+        <div className="skeleton skeleton-large" style={{ width: '70%', margin: '0 auto 16px' }} />
+        <div className="skeleton skeleton-block" style={{ width: '100%' }} />
+      </div>
+      <div className="glass-card leaderboard-section">
+        <div className="skeleton skeleton-block" style={{ width: '50%', marginBottom: 20 }} />
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="skeleton skeleton-block" style={{ marginBottom: 10 }} />
+        ))}
       </div>
     </div>
   )
+}
+
+// ---------------------------------------------------------------------------
+// Main App
+// ---------------------------------------------------------------------------
+function App() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const authHeader = await getAuthHeader(API_URL);
+      const headers = { 'Content-Type': 'application/json' };
+      if (authHeader) headers['Authorization'] = authHeader;
+
+      const response = await fetch(API_URL, { headers });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Error ${response.status}: ${text || response.statusText}`);
+      }
+
+      const json = await response.json();
+
+      if (typeof json.total_km === 'undefined') {
+        throw new Error("Respuesta inesperada del servidor.");
+      }
+
+      setData(json);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // --- Loading state ---
+  if (loading) return (
+    <div id="root">
+      <header className="dashboard-header">
+        <div className="logo-badge">
+          <span className="live-dot" />
+          ACTIVUM
+        </div>
+        <h1>ACTIVUM Rides the Wave</h1>
+        <p className="subtitle">Cargando datos...</p>
+      </header>
+      <LoadingSkeleton />
+    </div>
+  );
+
+  // --- Error state ---
+  if (error) return (
+    <div id="root">
+      <header className="dashboard-header">
+        <div className="logo-badge">⚠️ Error</div>
+        <h1>ACTIVUM Rides the Wave</h1>
+      </header>
+      <div className="glass-card error-state">
+        <h2>No se pudieron cargar los datos</h2>
+        <p>{error}</p>
+        <button className="btn-retry" onClick={fetchData} id="btn-retry">
+          🔄 Reintentar
+        </button>
+      </div>
+    </div>
+  );
+
+  // --- Data ---
+  const goalKm = data.config?.goal_km ?? 500;
+  const totalKm = data.total_km ?? 0;
+  const percentage = Math.min(Math.max((totalKm / goalKm) * 100, 0), 100);
+  const topAthletes = data.top_athletes ?? [];
+  const lastActivities = data.last_activities ?? [];
+
+  return (
+    <div id="root">
+      {/* ---- Header ---- */}
+      <header className="dashboard-header">
+        <div className="logo-badge">
+          <span className="live-dot" />
+          ACTIVUM
+        </div>
+        <h1>ACTIVUM Rides the Wave</h1>
+        <p className="subtitle">
+          Cada kilómetro recorrido cuenta. Juntos llegamos más lejos.
+        </p>
+      </header>
+
+      <div className="stagger">
+
+        {/* ---- KM Counter + Progress ---- */}
+        <div className="glass-card counter-section">
+          <div className="counter-label">Kilómetros recorridos</div>
+
+          <div>
+            <span className="counter-number" id="total-km-counter">
+              {totalKm.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+            </span>
+            <span className="counter-unit">km</span>
+          </div>
+
+          <div className="progress-section">
+            <div className="progress-labels">
+              <span>0 km</span>
+              <span className="goal-label">META: {goalKm.toLocaleString('es-ES')} km</span>
+            </div>
+            <div className="progress-track" role="progressbar" aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={100}>
+              <div className="progress-fill" style={{ width: `${percentage}%` }} />
+            </div>
+            <p className="progress-pct">
+              Progreso: <strong>{percentage.toFixed(1)}%</strong>
+              {' '}·{' '}
+              <span style={{ color: 'var(--text-muted)' }}>
+                {data.total_activities} actividades registradas
+              </span>
+            </p>
+          </div>
+        </div>
+
+        {/* ---- Leaderboard ---- */}
+        <div className="glass-card leaderboard-section">
+          <div className="section-title">
+            <span className="section-icon">🏆</span>
+            Ranking de atletas
+            <span style={{
+              marginLeft: 'auto',
+              fontSize: '0.75rem',
+              fontWeight: 400,
+              color: 'var(--text-muted)',
+            }}>
+              Top 10
+            </span>
+          </div>
+
+          {topAthletes.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              Aún no hay atletas registrados.
+            </p>
+          ) : (
+            <div className="athlete-list">
+              {topAthletes.map((athlete, index) => {
+                const rank = index + 1;
+                const medal = getMedal(rank);
+                return (
+                  <div
+                    key={athlete.athlete_name}
+                    className={`athlete-row ${rank <= 3 ? `top-${rank}` : ''}`}
+                    id={`athlete-row-${rank}`}
+                  >
+                    <div className={`athlete-rank ${medal.cls}`}>
+                      {medal.emoji}
+                    </div>
+
+                    <div className="athlete-info">
+                      <div className="athlete-name">{athlete.athlete_name}</div>
+                      {athlete.lastIncrement > 0 && (
+                        <div className="athlete-increment">
+                          Última: <span>+{athlete.lastIncrement.toFixed(2)} km</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <span className="athlete-km">
+                        {athlete.currentKm.toLocaleString('es-ES', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                      <span className="athlete-km-unit">km</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ---- Activity Carousel ---- */}
+        <ActivityCarousel activities={lastActivities} />
+
+      </div>
+    </div>
+  );
 }
 
 export default App
