@@ -7,7 +7,7 @@ import config
 
 # Initialize DynamoDB Resource
 dynamodb = boto3.resource('dynamodb', region_name=config.AWS_REGION)
-activities_table = dynamodb.Table(config.DYNAMODB_TABLE_NAME)
+activities_table = dynamodb.Table(config.ACTIVITIES_TABLE_NAME)
 athletes_table = dynamodb.Table(config.ATHLETES_TABLE_NAME)
 
 

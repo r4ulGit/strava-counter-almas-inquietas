@@ -20,7 +20,7 @@ def api_env(monkeypatch):
     monkeypatch.setenv('RATE_LIMIT_WINDOW', '60')
     monkeypatch.setenv('API_KEY', 'key')
     monkeypatch.setenv('API_SIGNING_SECRET', 'secret')
-    monkeypatch.setenv('DYNAMODB_TABLE_NAME', 'ACTIVUM_ACT')
+    monkeypatch.setenv('ACTIVITIES_TABLE_NAME', 'ACTIVUM_ACT')
     monkeypatch.setenv('ATHLETES_TABLE_NAME', 'ACTIVUM_USR')
     monkeypatch.setenv('AWS_REGION', 'eu-west-1')
     monkeypatch.setenv('GOAL_KM', '500')

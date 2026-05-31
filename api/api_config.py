@@ -7,7 +7,7 @@ current_dir = Path(__file__).resolve().parent
 load_dotenv(dotenv_path=current_dir / '.env')
 
 # --- DynamoDB ---
-DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'ACTIVUM_ACT')
+ACTIVITIES_TABLE_NAME = os.getenv('ACTIVITIES_TABLE_NAME', 'ACTIVUM_ACT')
 ATHLETES_TABLE_NAME = os.getenv('ATHLETES_TABLE_NAME', 'ACTIVUM_USR')
 AWS_REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
