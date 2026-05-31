@@ -22,3 +22,7 @@ htmlcov/
 # Note: .env files ARE committed to git for convenience.
 # Real AWS secrets must only be set in the Lambda console / Vercel dashboard.
 # See GEMINI.md §9 for environment variable reference.
+
+# Local Secrets
+api/.env
+worker/.env

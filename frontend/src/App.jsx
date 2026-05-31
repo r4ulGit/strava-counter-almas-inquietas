@@ -51,7 +51,18 @@ function App() {
       const headers = { 'Content-Type': 'application/json' };
       if (authHeader) headers['Authorization'] = authHeader;
 
-      const response = await fetch(API_URL, { headers });
+      let response = await fetch(API_URL, { headers });
+
+      // If 401 Unauthorized, the cached token might be invalid (e.g. server restarted).
+      // Clear cache and retry exactly once.
+      if (response.status === 401 && authHeader) {
+        console.warn('🔐 Cached token invalid (401). Retrying with fresh token...');
+        sessionStorage.removeItem('activum_auth_token');
+        const freshAuthHeader = await getAuthHeader(API_URL);
+        const freshHeaders = { 'Content-Type': 'application/json' };
+        if (freshAuthHeader) freshHeaders['Authorization'] = freshAuthHeader;
+        response = await fetch(API_URL, { headers: freshHeaders });
+      }
 
       if (!response.ok) {
         const text = await response.text();

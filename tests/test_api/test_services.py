@@ -19,7 +19,7 @@ sys.path.insert(0, API_DIR)
 
 @pytest.fixture(autouse=True)
 def api_env(monkeypatch):
-    monkeypatch.setenv('DYNAMODB_TABLE_NAME', 'ACTIVUM_ACT')
+    monkeypatch.setenv('ACTIVITIES_TABLE_NAME', 'ACTIVUM_ACT')
     monkeypatch.setenv('ATHLETES_TABLE_NAME', 'ACTIVUM_USR')
     monkeypatch.setenv('AWS_REGION', 'eu-west-1')
     monkeypatch.setenv('AWS_ACCESS_KEY_ID', 'testing')

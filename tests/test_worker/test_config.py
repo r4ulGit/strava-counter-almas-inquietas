@@ -62,10 +62,10 @@ class TestStravaClubIds:
 
 class TestTableNames:
     def test_default_activities_table(self, monkeypatch):
-        monkeypatch.delenv('DYNAMODB_TABLE_NAME', raising=False)
+        monkeypatch.delenv('ACTIVITIES_TABLE_NAME', raising=False)
         monkeypatch.setenv('STRAVA_CLUB_IDS', '[]')
         config = reload_config(monkeypatch)
-        assert config.DYNAMODB_TABLE_NAME == 'ACTIVUM_ACT'
+        assert config.ACTIVITIES_TABLE_NAME == 'ACTIVUM_ACT'
 
     def test_default_athletes_table(self, monkeypatch):
         monkeypatch.delenv('ATHLETES_TABLE_NAME', raising=False)
@@ -74,9 +74,9 @@ class TestTableNames:
         assert config.ATHLETES_TABLE_NAME == 'ACTIVUM_USR'
 
     def test_custom_table_names(self, monkeypatch):
-        monkeypatch.setenv('DYNAMODB_TABLE_NAME', 'my-activities')
+        monkeypatch.setenv('ACTIVITIES_TABLE_NAME', 'my-activities')
         monkeypatch.setenv('ATHLETES_TABLE_NAME', 'my-athletes')
         monkeypatch.setenv('STRAVA_CLUB_IDS', '[]')
         config = reload_config(monkeypatch)
-        assert config.DYNAMODB_TABLE_NAME == 'my-activities'
+        assert config.ACTIVITIES_TABLE_NAME == 'my-activities'
         assert config.ATHLETES_TABLE_NAME == 'my-athletes'

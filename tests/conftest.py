@@ -20,7 +20,7 @@ def set_env_vars(monkeypatch):
     monkeypatch.setenv('AWS_SECRET_ACCESS_KEY', 'testing')
     monkeypatch.setenv('AWS_SECURITY_TOKEN', 'testing')
     monkeypatch.setenv('AWS_SESSION_TOKEN', 'testing')
-    monkeypatch.setenv('DYNAMODB_TABLE_NAME', 'ACTIVUM_ACT')
+    monkeypatch.setenv('ACTIVITIES_TABLE_NAME', 'ACTIVUM_ACT')
     monkeypatch.setenv('ATHLETES_TABLE_NAME', 'ACTIVUM_USR')
     monkeypatch.setenv('AWS_REGION', 'eu-west-1')
     monkeypatch.setenv('GOAL_KM', '12000')

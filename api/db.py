@@ -4,7 +4,7 @@ import api_config as config
 
 # Initialize DynamoDB resource (shared across invocations in the same Lambda instance)
 dynamodb = boto3.resource('dynamodb', region_name=config.AWS_REGION)
-activities_table = dynamodb.Table(config.DYNAMODB_TABLE_NAME)
+activities_table = dynamodb.Table(config.ACTIVITIES_TABLE_NAME)
 athletes_table = dynamodb.Table(config.ATHLETES_TABLE_NAME)
 
 

@@ -330,7 +330,7 @@ The worker fetches from all clubs configured in `STRAVA_CLUB_IDS` using a **sing
 | `STRAVA_CLIENT_SECRET` | Yes | — | Strava OAuth client secret |
 | `STRAVA_REFRESH_TOKEN` | Yes | — | Long-lived refresh token |
 | `STRAVA_CLUB_IDS` | Yes | `[]` | JSON array, e.g. `["1793883","9876543"]` |
-| `DYNAMODB_TABLE_NAME` | No | `ACTIVUM_ACT` | Activities table |
+| `ACTIVITIES_TABLE_NAME` | No | `ACTIVUM_ACT` | Activities table |
 | `ATHLETES_TABLE_NAME` | No | `ACTIVUM_USR` | Athletes table |
 | `AWS_REGION` | No | `eu-west-1` | AWS region |
 
@@ -338,7 +338,7 @@ The worker fetches from all clubs configured in `STRAVA_CLUB_IDS` using a **sing
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `DYNAMODB_TABLE_NAME` | No | `ACTIVUM_ACT` | Activities table |
+| `ACTIVITIES_TABLE_NAME` | No | `ACTIVUM_ACT` | Activities table |
 | `ATHLETES_TABLE_NAME` | No | `ACTIVUM_USR` | Athletes table |
 | `AWS_REGION` | No | `eu-west-1` | AWS region |
 | `GOAL_KM` | No | `500` | Target km for progress bar |

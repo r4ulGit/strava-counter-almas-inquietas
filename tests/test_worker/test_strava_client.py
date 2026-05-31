@@ -15,7 +15,7 @@ def worker_env(monkeypatch):
     monkeypatch.setenv('STRAVA_CLIENT_SECRET', 'secret')
     monkeypatch.setenv('STRAVA_REFRESH_TOKEN', 'refresh-token')
     monkeypatch.setenv('STRAVA_CLUB_IDS', '["1793883"]')
-    monkeypatch.setenv('DYNAMODB_TABLE_NAME', 'ACTIVUM_ACT')
+    monkeypatch.setenv('ACTIVITIES_TABLE_NAME', 'ACTIVUM_ACT')
     monkeypatch.setenv('ATHLETES_TABLE_NAME', 'ACTIVUM_USR')
     monkeypatch.setenv('AWS_REGION', 'eu-west-1')
 
