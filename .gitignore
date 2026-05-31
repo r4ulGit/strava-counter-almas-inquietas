@@ -1,3 +1,24 @@
-.env
+# Python
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+
+# Frontend
+node_modules/
+dist/
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Note: .env files ARE committed to git for convenience.
+# Real AWS secrets must only be set in the Lambda console / Vercel dashboard.
+# See GEMINI.md §9 for environment variable reference.

@@ -4,9 +4,8 @@ on:
   push:
     branches:
       - master
-      - AWS-integration
     paths:
-      - 'api/**'  # 👈 The workflow will only run if you touch files inside the 'api' folder
+      - 'api/**'  # Only triggers on changes inside the api folder
 
 jobs:
   deploy_api:
@@ -21,11 +20,14 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Zip the API code
+    - name: Zip the API code (excluding .env and dev files)
       run: |
         cd api
-        # Comprimimos solo el contenido de la carpeta api
-        zip -r ../api_package.zip . 
+        zip -r ../api_package.zip . \
+          -x ".env" \
+          -x "__pycache__/*" \
+          -x "*.pyc" \
+          -x ".gitignore"
         cd ..
 
     - name: Deploy to AWS Lambda
@@ -34,5 +36,5 @@ jobs:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: eu-west-1
-        function_name: StravaCounterBackendAPI  # ⚠️ Asegúrate de que coincida con el nombre en AWS
+        function_name: StravaCounterBackendAPI
         zip_file: api_package.zip

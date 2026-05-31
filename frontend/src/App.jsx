@@ -1,106 +1,231 @@
-import { useState, useEffect } from 'react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useState, useEffect, useCallback } from 'react'
 import './App.css'
+import { API_URL } from './config.js'
+import { getAuthHeader } from './apiAuth.js'
+import ActivityCarousel from './components/ActivityCarousel.jsx'
 
-// ⚠️ PASTE YOUR LAMBDA BACKEND URL HERE (Function URL)
-const API_URL = "https://4tmnmle654hfpiku73chw3p7ia0tbyjg.lambda-url.eu-west-1.on.aws/";
+// ---------------------------------------------------------------------------
+// Medal helper
+// ---------------------------------------------------------------------------
+function getMedal(rank) {
+  if (rank === 1) return { emoji: '🥇', cls: 'medal top-1' };
+  if (rank === 2) return { emoji: '🥈', cls: 'medal top-2' };
+  if (rank === 3) return { emoji: '🥉', cls: 'medal top-3' };
+  return { emoji: String(rank), cls: '' };
+}
 
+// ---------------------------------------------------------------------------
+// Loading skeleton
+// ---------------------------------------------------------------------------
+function LoadingSkeleton() {
+  return (
+    <div className="stagger">
+      <div className="glass-card counter-section">
+        <div className="skeleton skeleton-block" style={{ width: '40%', margin: '0 auto 12px' }} />
+        <div className="skeleton skeleton-large" style={{ width: '70%', margin: '0 auto 16px' }} />
+        <div className="skeleton skeleton-block" style={{ width: '100%' }} />
+      </div>
+      <div className="glass-card leaderboard-section">
+        <div className="skeleton skeleton-block" style={{ width: '50%', marginBottom: 20 }} />
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="skeleton skeleton-block" style={{ marginBottom: 10 }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main App
+// ---------------------------------------------------------------------------
 function App() {
-  const [data, setData] = useState([]);
-  const [chartData, setChartData] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetch(API_URL)
-      .then(response => {
-        if (!response.ok) {
-            // Try to read the error message from the backend if possible
-            return response.text().then(text => { throw new Error(text || 'Network response was not ok') })
-        }
-        return response.json();
-      })
-      .then(stravaData => {
-        console.log("Data received from Backend:", stravaData); // Debugging line
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const authHeader = await getAuthHeader(API_URL);
+      const headers = { 'Content-Type': 'application/json' };
+      if (authHeader) headers['Authorization'] = authHeader;
 
-        // Safety check: Ensure we received an Array
-        if (!Array.isArray(stravaData)) {
-            throw new Error("Backend format error: Expected a list of activities.");
-        }
+      const response = await fetch(API_URL, { headers });
 
-        setData(stravaData); 
-        processDataForChart(stravaData); 
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error("Error fetching data:", error);
-        setError(error.message);
-        setLoading(false);
-      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Error ${response.status}: ${text || response.statusText}`);
+      }
+
+      const json = await response.json();
+
+      if (typeof json.total_km === 'undefined') {
+        throw new Error("Respuesta inesperada del servidor.");
+      }
+
+      setData(json);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const processDataForChart = (items) => {
-    // Safety check inside the function too
-    if (!items || !Array.isArray(items)) return;
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-    const counts = {};
-    items.forEach(item => {
-      const type = item.type || 'Other';
-      counts[type] = (counts[type] || 0) + 1;
-    });
-
-    const processed = Object.keys(counts).map(key => ({
-      name: key,
-      count: counts[key]
-    }));
-    
-    setChartData(processed);
-  }
-
-  if (loading) return <h2>⏳ Loading Strava data...</h2>;
-  if (error) return (
-    <div style={{color: 'red', padding: '20px', border: '1px solid red'}}>
-        <h2>❌ Error detected:</h2>
-        <p>{error}</p>
-        <p><small>Check the console (F12) for more details.</small></p>
+  // --- Loading state ---
+  if (loading) return (
+    <div id="root">
+      <header className="dashboard-header">
+        <div className="logo-badge">
+          <span className="live-dot" />
+          ACTIVUM
+        </div>
+        <h1>ACTIVUM Rides the Wave</h1>
+        <p className="subtitle">Cargando datos...</p>
+      </header>
+      <LoadingSkeleton />
     </div>
   );
 
-  return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>📊 CONTADOR ALMAS INQUETAS</h1>
-      
-      <div style={{ marginBottom: '30px' }}>
-        <h2>Total Activities: <span style={{ color: '#fc4c02' }}>{data.length}</span></h2>
+  // --- Error state ---
+  if (error) return (
+    <div id="root">
+      <header className="dashboard-header">
+        <div className="logo-badge">⚠️ Error</div>
+        <h1>ACTIVUM Rides the Wave</h1>
+      </header>
+      <div className="glass-card error-state">
+        <h2>No se pudieron cargar los datos</h2>
+        <p>{error}</p>
+        <button className="btn-retry" onClick={fetchData} id="btn-retry">
+          🔄 Reintentar
+        </button>
       </div>
-
-      <div style={{ width: '100%', height: 400 }}>
-        <h3>Breakdown by Sport</h3>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{ top: 5, right: 30, left: 20, bottom: 40 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" stroke="#ccc"/>
-            <YAxis allowDecimals={false} stroke="#ccc"/> 
-            <Tooltip cursor={false} contentStyle={{ border: '1px solid #ccc', borderRadius: 4, padding: 12 }}/>
-            <Legend verticalAlign="top" height={36}/>
-            <Bar dataKey="count" fill="#fc4c02" name="Activities" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <h3>Recent Activities</h3>
-      <ul>
-        {data.slice(0, 5).map(act => (
-          <li key={act.activity_id || act.strava_activities_id}>
-             {act.type}: {act.name} ({act.distance_km} km)
-          </li>
-        ))}
-      </ul>
     </div>
-  )
+  );
+
+  // --- Data ---
+  const goalKm = data.config?.goal_km ?? 500;
+  const totalKm = data.total_km ?? 0;
+  const percentage = Math.min(Math.max((totalKm / goalKm) * 100, 0), 100);
+  const topAthletes = data.top_athletes ?? [];
+  const lastActivities = data.last_activities ?? [];
+
+  return (
+    <div id="root">
+      {/* ---- Header ---- */}
+      <header className="dashboard-header">
+        <div className="logo-badge">
+          <span className="live-dot" />
+          ACTIVUM
+        </div>
+        <h1>ACTIVUM Rides the Wave</h1>
+        <p className="subtitle">
+          Cada kilómetro recorrido cuenta. Juntos llegamos más lejos.
+        </p>
+      </header>
+
+      <div className="stagger">
+
+        {/* ---- KM Counter + Progress ---- */}
+        <div className="glass-card counter-section">
+          <div className="counter-label">Kilómetros recorridos</div>
+
+          <div>
+            <span className="counter-number" id="total-km-counter">
+              {totalKm.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+            </span>
+            <span className="counter-unit">km</span>
+          </div>
+
+          <div className="progress-section">
+            <div className="progress-labels">
+              <span>0 km</span>
+              <span className="goal-label">META: {goalKm.toLocaleString('es-ES')} km</span>
+            </div>
+            <div className="progress-track" role="progressbar" aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={100}>
+              <div className="progress-fill" style={{ width: `${percentage}%` }} />
+            </div>
+            <p className="progress-pct">
+              Progreso: <strong>{percentage.toFixed(1)}%</strong>
+              {' '}·{' '}
+              <span style={{ color: 'var(--text-muted)' }}>
+                {data.total_activities} actividades registradas
+              </span>
+            </p>
+          </div>
+        </div>
+
+        {/* ---- Leaderboard ---- */}
+        <div className="glass-card leaderboard-section">
+          <div className="section-title">
+            <span className="section-icon">🏆</span>
+            Ranking de atletas
+            <span style={{
+              marginLeft: 'auto',
+              fontSize: '0.75rem',
+              fontWeight: 400,
+              color: 'var(--text-muted)',
+            }}>
+              Top 10
+            </span>
+          </div>
+
+          {topAthletes.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              Aún no hay atletas registrados.
+            </p>
+          ) : (
+            <div className="athlete-list">
+              {topAthletes.map((athlete, index) => {
+                const rank = index + 1;
+                const medal = getMedal(rank);
+                return (
+                  <div
+                    key={athlete.athlete_name}
+                    className={`athlete-row ${rank <= 3 ? `top-${rank}` : ''}`}
+                    id={`athlete-row-${rank}`}
+                  >
+                    <div className={`athlete-rank ${medal.cls}`}>
+                      {medal.emoji}
+                    </div>
+
+                    <div className="athlete-info">
+                      <div className="athlete-name">{athlete.athlete_name}</div>
+                      {athlete.lastIncrement > 0 && (
+                        <div className="athlete-increment">
+                          Última: <span>+{athlete.lastIncrement.toFixed(2)} km</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <span className="athlete-km">
+                        {athlete.currentKm.toLocaleString('es-ES', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                      <span className="athlete-km-unit">km</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ---- Activity Carousel ---- */}
+        <ActivityCarousel activities={lastActivities} />
+
+      </div>
+    </div>
+  );
 }
 
 export default App
