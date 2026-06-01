@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import './App.css'
 import { API_URL } from './config.js'
 import { getAuthHeader } from './apiAuth.js'
@@ -92,10 +92,6 @@ function App() {
   if (loading) return (
     <div id="root">
       <header className="dashboard-header">
-        <div className="logo-badge">
-          <span className="live-dot" />
-          ACTIVUM
-        </div>
         <h1>ACTIVUM Rides the Wave</h1>
         <p className="subtitle">Cargando datos...</p>
       </header>
@@ -107,7 +103,6 @@ function App() {
   if (error) return (
     <div id="root">
       <header className="dashboard-header">
-        <div className="logo-badge">⚠️ Error</div>
         <h1>ACTIVUM Rides the Wave</h1>
       </header>
       <div className="glass-card error-state">
@@ -131,10 +126,6 @@ function App() {
     <div id="root">
       {/* ---- Header ---- */}
       <header className="dashboard-header">
-        <div className="logo-badge">
-          <span className="live-dot" />
-          ACTIVUM
-        </div>
         <h1>ACTIVUM Rides the Wave</h1>
         <p className="subtitle">
           Cada kilómetro recorrido cuenta. Juntos llegamos más lejos.

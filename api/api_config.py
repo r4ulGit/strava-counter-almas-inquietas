@@ -1,10 +1,15 @@
 import os
-from dotenv import load_dotenv
 from pathlib import Path
 
 # Load environment variables (for local testing)
-current_dir = Path(__file__).resolve().parent
-load_dotenv(dotenv_path=current_dir / '.env')
+try:
+    from dotenv import load_dotenv
+    current_dir = Path(__file__).resolve().parent
+    load_dotenv(dotenv_path=current_dir / '.env')
+except ImportError:
+    # python-dotenv is not installed in the AWS Lambda runtime, which is expected.
+    # Environment variables are loaded directly from the Lambda console.
+    pass
 
 # --- DynamoDB ---
 ACTIVITIES_TABLE_NAME = os.getenv('ACTIVITIES_TABLE_NAME', 'ACTIVUM_ACT')
