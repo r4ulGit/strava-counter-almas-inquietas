@@ -17,10 +17,16 @@ ATHLETES_TABLE_NAME = os.getenv('ATHLETES_TABLE_NAME', 'ACTIVUM_USR')
 AWS_REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
 # --- App Config ---
-try:
-    GOAL_KM = float(os.getenv('GOAL_KM', 500))
-except (ValueError, TypeError):
-    GOAL_KM = 500.0
+# GOAL_KM is None when the env var is not set or is empty.
+# The frontend hides the progress bar when goal_km is null.
+_goal_km_raw = os.getenv('GOAL_KM', '').strip()
+if _goal_km_raw:
+    try:
+        GOAL_KM = float(_goal_km_raw)
+    except (ValueError, TypeError):
+        GOAL_KM = None
+else:
+    GOAL_KM = None
 
 try:
     LAST_ACT = int(os.getenv('LAST_ACT', 10))

@@ -146,6 +146,15 @@
   color: var(--activum-teal-dark);
 }
 
+/* Shown instead of progress bar when no goal is configured */
+.counter-activities-note {
+  margin-top: var(--space-md);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
 /* ---- Section Title ---- */
 .section-title {
   display: flex;
@@ -414,3 +423,27 @@
 
   .activity-card { flex: 0 0 180px; }
 }
+
+/* ---- Single-view mode (?view=counter|ranking|activities) ---- */
+/* Give the isolated section a bit more breathing room */
+#root.view-counter,
+#root.view-ranking,
+#root.view-activities {
+  padding-top: var(--space-lg);
+}
+
+/* In counter-only view make the number even bigger */
+#root.view-counter .counter-number {
+  font-size: clamp(5rem, 16vw, 10rem);
+}
+
+/* In ranking-only view remove the bottom carousel gap */
+#root.view-ranking .leaderboard-section {
+  margin-bottom: 0;
+}
+
+/* In activities-only view remove the bottom margin */
+#root.view-activities .carousel-section {
+  margin-bottom: 0;
+}
+
