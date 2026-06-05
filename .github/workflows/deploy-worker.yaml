@@ -10,6 +10,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [prod-activum, prod-newclub]
+    environment: ${{ matrix.environment }}
     steps:
     # 1. Download the code from the repository
     - name: Checkout code
@@ -48,12 +52,12 @@ jobs:
         echo "=== Checking zip contents ==="
         unzip -l deploy_package.zip | grep -E "(strava_retreiver\.py|config\.py|database\.py|strava_client\.py|requests/)" | head -20
 
-    # 5. Deploy to AWS Lambda (ActivumCounterWorker)
+    # 5. Deploy to AWS Lambda
     - name: Deploy to Lambda
       uses: appleboy/lambda-action@master
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws_region: eu-west-1
-        function_name: ActivumCounterWorker
+        aws_region: ${{ vars.AWS_REGION }}
+        function_name: ${{ vars.LAMBDA_FUNCTION_WORKER }}
         zip_file: deploy_package.zip

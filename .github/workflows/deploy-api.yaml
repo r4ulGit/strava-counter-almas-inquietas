@@ -10,6 +10,10 @@ on:
 jobs:
   deploy_api:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [prod-activum, prod-newclub]
+    environment: ${{ matrix.environment }}
 
     steps:
     - name: Checkout code
@@ -35,6 +39,6 @@ jobs:
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws_region: eu-west-1
-        function_name: StravaCounterBackendAPI
+        aws_region: ${{ vars.AWS_REGION }}
+        function_name: ${{ vars.LAMBDA_FUNCTION_API }}
         zip_file: api_package.zip

@@ -153,3 +153,11 @@ class TestBuildDashboardData:
         assert result['total_activities'] == 0
         assert result['top_athletes'] == []
         assert result['last_activities'] == []
+
+    def test_goal_km_is_none_when_env_var_unset(self, monkeypatch):
+        monkeypatch.setenv('GOAL_KM', '')  # override autouse fixture value with empty string
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=[]), \
+             patch.object(svc.db, 'get_top_athletes', return_value=[]):
+            result = svc.build_dashboard_data()
+        assert result['config']['goal_km'] is None
