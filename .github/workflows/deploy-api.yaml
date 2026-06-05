@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [prod-activum, prod-newclub]
+        environment: [prod-ACTIVUM, prod-ALMAS]
     environment: ${{ matrix.environment }}
 
     steps:
