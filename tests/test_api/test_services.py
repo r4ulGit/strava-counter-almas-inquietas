@@ -161,3 +161,62 @@ class TestBuildDashboardData:
              patch.object(svc.db, 'get_top_athletes', return_value=[]):
             result = svc.build_dashboard_data()
         assert result['config']['goal_km'] is None
+
+    def test_filter_by_activity_type(self, monkeypatch):
+        monkeypatch.setenv('ACT_TYPE_FILTER', 'Run')
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=SAMPLE_ACTIVITIES), \
+             patch.object(svc.db, 'get_top_athletes', return_value=SAMPLE_ATHLETES):
+            result = svc.build_dashboard_data()
+        
+        # Only 'Morning Run' (10.03) and 'Old Run' (5.00) should be included.
+        # total_km = 15.03
+        assert result['total_km'] == pytest.approx(15.03, abs=0.01)
+        assert result['total_activities'] == 2
+        types = {a['type'] for a in result['last_activities']}
+        assert types == {'Run'}
+
+    def test_filter_by_activity_title(self, monkeypatch):
+        monkeypatch.setenv('ACT_TITLE_FILTER', 'evening')
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=SAMPLE_ACTIVITIES), \
+             patch.object(svc.db, 'get_top_athletes', return_value=SAMPLE_ATHLETES):
+            result = svc.build_dashboard_data()
+        
+        # Only 'Evening Ride' (25.00)
+        assert result['total_km'] == pytest.approx(25.00, abs=0.01)
+        assert result['total_activities'] == 1
+        assert result['last_activities'][0]['title'] == 'Evening Ride'
+
+    def test_filter_by_start_date(self, monkeypatch):
+        monkeypatch.setenv('START_DATE', '2026-05-29T00:00:00Z')
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=SAMPLE_ACTIVITIES), \
+             patch.object(svc.db, 'get_top_athletes', return_value=SAMPLE_ATHLETES):
+            result = svc.build_dashboard_data()
+        
+        # Excludes 'Old Run' (2026-05-01) and 'Quick Hike' (2026-05-28)
+        # Keeps: 'Morning Run' (2026-05-30) and 'Evening Ride' (2026-05-29)
+        # total_km = 10.03 + 25.00 = 35.03
+        assert result['total_km'] == pytest.approx(35.03, abs=0.01)
+        assert result['total_activities'] == 2
+
+    def test_dynamic_leaderboard_recalculation(self, monkeypatch):
+        # Filter for Run activities
+        monkeypatch.setenv('ACT_TYPE_FILTER', 'Run')
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=SAMPLE_ACTIVITIES), \
+             patch.object(svc.db, 'get_top_athletes', return_value=SAMPLE_ATHLETES):
+            result = svc.build_dashboard_data()
+        
+        # Recalculated top athletes should only include Daniel F. (10.03) and Jose A. (5.00).
+        # Lucia L. has no Run activities, so she is omitted from the leaderboard.
+        top_athletes = result['top_athletes']
+        assert len(top_athletes) == 2
+        assert top_athletes[0]['athlete_name'] == 'Daniel F.'
+        assert top_athletes[0]['currentKm'] == pytest.approx(10.03, abs=0.01)
+        assert top_athletes[0]['lastIncrement'] == pytest.approx(10.03, abs=0.01)
+
+        assert top_athletes[1]['athlete_name'] == 'Jose A.'
+        assert top_athletes[1]['currentKm'] == pytest.approx(5.00, abs=0.01)
+        assert top_athletes[1]['lastIncrement'] == pytest.approx(5.00, abs=0.01)
