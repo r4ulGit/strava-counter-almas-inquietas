@@ -24,21 +24,40 @@ def retrieve_strava_data_lambda(event, context):
     if not token:
         return {'statusCode': 401, 'body': 'Auth Failed'}
 
-    # 2. Fetch from each club, save activities, update athletes
-    total_saved = 0
+    # 2. Fetch from all clubs
+    club_activities = []
     total_fetched = 0
 
     for club_id in config.STRAVA_CLUB_IDS:
-        print(f"\n📦 Processing Club ID: {club_id}")
+        print(f"\n📦 Fetching Club ID: {club_id}")
         activities = strava_client.get_club_activities(token, club_id)
-        total_fetched += len(activities)
         print(f"   Retrieved {len(activities)} activities from club {club_id}")
+        total_fetched += len(activities)
+        club_activities.append(activities)
 
-        for act in activities:
-            was_new = database.save_activity(act)
-            if was_new:
-                total_saved += 1
-                database.upsert_athlete(act)
+    # 3. Interweave the activities from different clubs (oldest to newest relative order)
+    interweaved = []
+    max_len = max(len(lst) for lst in club_activities) if club_activities else 0
+    # Loop backwards from oldest (max_len - 1) to newest (0)
+    for i in range(max_len - 1, -1, -1):
+        for lst in club_activities:
+            if i < len(lst):
+                interweaved.append(lst[i])
+
+    # 4. Save activities and update athletes with sequential timestamps
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    total_saved = 0
+
+    for idx, act in enumerate(interweaved):
+        if not act.get('start_date'):
+            offset = len(interweaved) - 1 - idx
+            act['start_date'] = (now - timedelta(minutes=offset)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        was_new = database.save_activity(act)
+        if was_new:
+            total_saved += 1
+            database.upsert_athlete(act)
 
     msg = (
         f"Process completed. "
