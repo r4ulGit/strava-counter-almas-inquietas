@@ -12,8 +12,14 @@ except ImportError:
     pass
 
 # --- DynamoDB ---
-ACTIVITIES_TABLE_NAME = os.getenv('ACTIVITIES_TABLE_NAME', 'ACTIVUM_ACT')
-ATHLETES_TABLE_NAME = os.getenv('ATHLETES_TABLE_NAME', 'ACTIVUM_USR')
+ACTIVITIES_TABLE_NAME = os.getenv('ACTIVITIES_TABLE_NAME', '').strip()
+if not ACTIVITIES_TABLE_NAME:
+    raise ValueError("Missing environment variable: ACTIVITIES_TABLE_NAME")
+
+ATHLETES_TABLE_NAME = os.getenv('ATHLETES_TABLE_NAME', '').strip()
+if not ATHLETES_TABLE_NAME:
+    raise ValueError("Missing environment variable: ATHLETES_TABLE_NAME")
+
 AWS_REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
 # --- App Config ---
@@ -64,3 +70,13 @@ CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:5173,http://127.0.0.1:5173'
 )
+
+# --- Activity Filtering ---
+_act_type_filter_raw = os.getenv('ACT_TYPE_FILTER', '').strip()
+if _act_type_filter_raw:
+    ACT_TYPE_FILTER = [t.strip() for t in _act_type_filter_raw.split(',') if t.strip()]
+else:
+    ACT_TYPE_FILTER = []
+
+ACT_TITLE_FILTER = os.getenv('ACT_TITLE_FILTER', '').strip()
+START_DATE = os.getenv('START_DATE', '').strip()

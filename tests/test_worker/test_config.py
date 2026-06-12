@@ -61,17 +61,17 @@ class TestStravaClubIds:
 
 
 class TestTableNames:
-    def test_default_activities_table(self, monkeypatch):
+    def test_missing_activities_table_raises_value_error(self, monkeypatch):
         monkeypatch.delenv('ACTIVITIES_TABLE_NAME', raising=False)
         monkeypatch.setenv('STRAVA_CLUB_IDS', '[]')
-        config = reload_config(monkeypatch)
-        assert config.ACTIVITIES_TABLE_NAME == 'ACTIVUM_ACT'
+        with pytest.raises(ValueError, match="Missing environment variable: ACTIVITIES_TABLE_NAME"):
+            reload_config(monkeypatch)
 
-    def test_default_athletes_table(self, monkeypatch):
+    def test_missing_athletes_table_raises_value_error(self, monkeypatch):
         monkeypatch.delenv('ATHLETES_TABLE_NAME', raising=False)
         monkeypatch.setenv('STRAVA_CLUB_IDS', '[]')
-        config = reload_config(monkeypatch)
-        assert config.ATHLETES_TABLE_NAME == 'ACTIVUM_USR'
+        with pytest.raises(ValueError, match="Missing environment variable: ATHLETES_TABLE_NAME"):
+            reload_config(monkeypatch)
 
     def test_custom_table_names(self, monkeypatch):
         monkeypatch.setenv('ACTIVITIES_TABLE_NAME', 'my-activities')

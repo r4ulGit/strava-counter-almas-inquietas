@@ -20,8 +20,14 @@ except json.JSONDecodeError:
     STRAVA_CLUB_IDS = []
 
 # --- DynamoDB ---
-ACTIVITIES_TABLE_NAME = os.getenv('ACTIVITIES_TABLE_NAME', 'ACTIVUM_ACT')
-ATHLETES_TABLE_NAME = os.getenv('ATHLETES_TABLE_NAME', 'ACTIVUM_USR')
+ACTIVITIES_TABLE_NAME = os.getenv('ACTIVITIES_TABLE_NAME', '').strip()
+if not ACTIVITIES_TABLE_NAME:
+    raise ValueError("Missing environment variable: ACTIVITIES_TABLE_NAME")
+
+ATHLETES_TABLE_NAME = os.getenv('ATHLETES_TABLE_NAME', '').strip()
+if not ATHLETES_TABLE_NAME:
+    raise ValueError("Missing environment variable: ATHLETES_TABLE_NAME")
+
 AWS_REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
 # --- Constants ---

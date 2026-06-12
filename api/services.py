@@ -5,23 +5,47 @@ import api_config as config
 def build_dashboard_data() -> dict:
     """
     Aggregates all data needed for the frontend dashboard:
-    - Total km across ALL activity types (no filter)
-    - Last LAST_ACT activities sorted newest-first
-    - Top 10 athletes sorted by currentKm descending
+    - Total km across filtered activities
+    - Last LAST_ACT filtered activities sorted newest-first
+    - Top 10 athletes sorted by currentKm descending (recalculated from filtered activities)
 
     Returns:
         A dict matching the API response contract.
     """
-    # Fetch all activities
+    # Fetch all activities from DynamoDB
     items = db.get_all_activities()
 
-    # Sum ALL activities (no type filter)
-    total_km = sum(float(item.get('distance_km', 0)) for item in items)
-    total_activities = len(items)
+    # Apply filters
+    filtered_items = []
+    for item in items:
+        # 1. Type Filter
+        if config.ACT_TYPE_FILTER:
+            itype = item.get('type') or ''
+            isport = item.get('sport_type') or ''
+            if itype not in config.ACT_TYPE_FILTER and isport not in config.ACT_TYPE_FILTER:
+                continue
+
+        # 2. Title Filter
+        if config.ACT_TITLE_FILTER:
+            title = item.get('title') or ''
+            if config.ACT_TITLE_FILTER.lower() not in title.lower():
+                continue
+
+        # 3. Start Date Filter
+        if config.START_DATE:
+            start_date = item.get('start_date') or ''
+            if start_date < config.START_DATE:
+                continue
+
+        filtered_items.append(item)
+
+    # Sum filtered activities
+    total_km = sum(float(item.get('distance_km', 0)) for item in filtered_items)
+    total_activities = len(filtered_items)
 
     # Sort by date descending for recent activities
     items_sorted = sorted(
-        items,
+        filtered_items,
         key=lambda x: x.get('start_date', ''),
         reverse=True
     )
@@ -38,16 +62,37 @@ def build_dashboard_data() -> dict:
             "date": item.get('start_date', ''),
         })
 
-    # Fetch top 10 athletes
-    top_athletes_raw = db.get_top_athletes(limit=10)
-    top_athletes = [
-        {
-            "athlete_name": a.get('athlete_name', 'Unknown'),
-            "currentKm": round(float(a.get('currentKm', 0)), 2),
-            "lastIncrement": round(float(a.get('lastIncrement', 0)), 2),
-        }
-        for a in top_athletes_raw
-    ]
+    # Calculate top 10 athletes dynamically based on filtered activities
+    athlete_stats = {}  # athlete_name -> { 'total_km': float, 'newest_date': str, 'newest_dist': float }
+    for item in filtered_items:
+        athlete_name = item.get('athlete')
+        if not athlete_name or athlete_name == 'Unknown':
+            continue
+        dist = float(item.get('distance_km', 0))
+        date = item.get('start_date', '')
+
+        if athlete_name not in athlete_stats:
+            athlete_stats[athlete_name] = {
+                'total_km': dist,
+                'newest_date': date,
+                'newest_dist': dist
+            }
+        else:
+            athlete_stats[athlete_name]['total_km'] += dist
+            if date > athlete_stats[athlete_name]['newest_date']:
+                athlete_stats[athlete_name]['newest_date'] = date
+                athlete_stats[athlete_name]['newest_dist'] = dist
+
+    # Format and sort top 10 athletes
+    top_athletes = []
+    for athlete_name, stats in athlete_stats.items():
+        top_athletes.append({
+            "athlete_name": athlete_name,
+            "currentKm": round(stats['total_km'], 2),
+            "lastIncrement": round(stats['newest_dist'], 2)
+        })
+    top_athletes.sort(key=lambda x: x['currentKm'], reverse=True)
+    top_athletes = top_athletes[:10]
 
     return {
         "total_km": round(total_km, 2),
