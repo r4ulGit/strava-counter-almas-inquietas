@@ -194,8 +194,8 @@ function App() {
   const showRanking    = !view || view === 'ranking';
   const showActivities = !view || view === 'activities';
 
-  // Show header only in full-view mode (no ?view= param) or counter view
-  const showHeader = !view || view === 'counter';
+  // Show header only in full-view mode (no ?view= param)
+  const showHeader = !view;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -247,7 +247,7 @@ function App() {
     <div id="root" className={view ? `view-${view}` : ''}>
       {showHeader && (
         <header className="dashboard-header">
-          <h1>ACTIVUM Rides the Wave</h1>
+          <h1>Rides the Wave</h1>
           <p className="subtitle">Cargando datos...</p>
         </header>
       )}
@@ -260,7 +260,7 @@ function App() {
     <div id="root" className={view ? `view-${view}` : ''}>
       {showHeader && (
         <header className="dashboard-header">
-          <h1>ACTIVUM Rides the Wave</h1>
+          <h1>Rides the Wave</h1>
         </header>
       )}
       <div className="glass-card error-state">
@@ -285,7 +285,7 @@ function App() {
       {/* ---- Header (full view and counter view only) ---- */}
       {showHeader && (
         <header className="dashboard-header">
-          <h1>ACTIVUM Rides the Wave</h1>
+          <h1>{data.config?.title || "Rides the Wave"}</h1>
           <p className="subtitle">
             Cada kilómetro recorrido cuenta. Juntos llegamos más lejos.
           </p>

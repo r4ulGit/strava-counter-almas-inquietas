@@ -130,6 +130,7 @@ strava-counter-almas-inquietas/
 | `AWS_REGION` | ❌ | `eu-west-1` | AWS region for DynamoDB |
 | `GOAL_KM` | ❌ | *none* | Target km for the progress bar. If empty or unset, the progress bar is hidden and only the total km counter is shown |
 | `LAST_ACT` | ❌ | `10` | Number of recent activities to return in the carousel |
+| `TITLE` | ❌ | `Rides the Wave` | The text displayed as the dashboard header title in the frontend (hidden if a view param is present) |
 
 #### Activity Filtering
 

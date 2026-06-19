@@ -80,3 +80,6 @@ else:
 
 ACT_TITLE_FILTER = os.getenv('ACT_TITLE_FILTER', '').strip()
 START_DATE = os.getenv('START_DATE', '').strip()
+
+# --- Title Config ---
+TITLE = os.getenv('TITLE', 'Rides the Wave').strip()
