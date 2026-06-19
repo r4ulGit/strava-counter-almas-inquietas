@@ -194,8 +194,8 @@ function App() {
   const showRanking    = !view || view === 'ranking';
   const showActivities = !view || view === 'activities';
 
-  // Show header only in full-view mode (no ?view= param)
-  const showHeader = !view;
+  // Show header only in full-view mode (no ?view= param) or counter view
+  const showHeader = !view || view === 'counter';
 
   const fetchData = useCallback(async () => {
     setLoading(true);
