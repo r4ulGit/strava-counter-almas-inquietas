@@ -22,16 +22,16 @@ Multi-club Strava activity dashboard that aggregates activities from multiple St
 ## 🏗️ Architecture
 
 ```
-┌─────────────────┐    Schedule     ┌──────────────────┐
+┌─────────────────┐    Schedule    ┌──────────────────┐
 │  Strava Clubs   │◄───────────────│  Strava Counter  │
 │  (Multiple)     │   every 6h     │  Worker (Lambda) │
 └─────────────────┘                └──────┬───────────┘
                                           │ write
                                    ┌──────▼────────────────────┐
-                                   │   DynamoDB                 │
-                                   │   Activities table          │
-                                   │   Athletes table            │
-                                   └──────┬─────────────────────┘
+                                   │   DynamoDB                │
+                                   │   Activities table        │
+                                   │   Athletes table          │
+                                   └──────┬────────────────────┘
                                           │ read
                                    ┌──────▼───────┐     HTTPS      ┌──────────────┐
                                    │   API        │◄───────────────│   Frontend   │
@@ -130,6 +130,7 @@ strava-counter-almas-inquietas/
 | `AWS_REGION` | ❌ | `eu-west-1` | AWS region for DynamoDB |
 | `GOAL_KM` | ❌ | *none* | Target km for the progress bar. If empty or unset, the progress bar is hidden and only the total km counter is shown |
 | `LAST_ACT` | ❌ | `10` | Number of recent activities to return in the carousel |
+| `TITLE` | ❌ | `Rides the Wave` | The text displayed as the dashboard header title in the frontend (shown in full and counter views, hidden in ranking and activities views) |
 
 #### Activity Filtering
 

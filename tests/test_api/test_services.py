@@ -220,3 +220,18 @@ class TestBuildDashboardData:
         assert top_athletes[1]['athlete_name'] == 'Jose A.'
         assert top_athletes[1]['currentKm'] == pytest.approx(5.00, abs=0.01)
         assert top_athletes[1]['lastIncrement'] == pytest.approx(5.00, abs=0.01)
+
+    def test_default_title(self):
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=[]), \
+             patch.object(svc.db, 'get_top_athletes', return_value=[]):
+            result = svc.build_dashboard_data()
+        assert result['config']['title'] == "Rides the Wave"
+
+    def test_custom_title(self, monkeypatch):
+        monkeypatch.setenv('TITLE', 'My Custom Title!')
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=[]), \
+             patch.object(svc.db, 'get_top_athletes', return_value=[]):
+            result = svc.build_dashboard_data()
+        assert result['config']['title'] == "My Custom Title!"
