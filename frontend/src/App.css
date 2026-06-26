@@ -426,15 +426,70 @@
 
 /* ---- Single-view mode (?view=counter|ranking|activities) ---- */
 /* Give the isolated section a bit more breathing room */
-#root.view-counter,
 #root.view-ranking,
 #root.view-activities {
   padding-top: var(--space-lg);
 }
 
-/* In counter-only view make the number even bigger */
+/* In counter-only view make the layout compact and fully responsive to viewport dimensions */
+#root.view-counter {
+  padding: 16px 0 8px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+#root.view-counter .dashboard-header {
+  margin-bottom: var(--space-sm) !important;
+}
+
+#root.view-counter .dashboard-header h1 {
+  font-size: clamp(1.4rem, 6.5vw, 2.4rem) !important;
+}
+
+#root.view-counter .dashboard-header .subtitle {
+  font-size: clamp(0.8rem, 2.8vw, 1.05rem) !important;
+  max-width: 380px !important;
+  margin: 0 auto !important;
+}
+
+#root.view-counter .counter-section {
+  padding: 16px !important;
+  margin-bottom: 0 !important;
+  border-radius: var(--radius-md) !important;
+}
+
+#root.view-counter .counter-label {
+  font-size: clamp(0.7rem, 2.2vw, 0.8rem) !important;
+  margin-bottom: var(--space-xs) !important;
+}
+
 #root.view-counter .counter-number {
-  font-size: clamp(5rem, 16vw, 10rem);
+  font-size: clamp(3rem, 12vw, 5.5rem) !important;
+}
+
+#root.view-counter .counter-unit {
+  font-size: clamp(1.1rem, 4vw, 1.8rem) !important;
+  margin-left: var(--space-xs) !important;
+}
+
+#root.view-counter .counter-activities-note {
+  font-size: clamp(0.7rem, 2.2vw, 0.85rem) !important;
+  margin-top: var(--space-xs) !important;
+  color: var(--text-muted);
+}
+
+#root.view-counter .progress-section {
+  margin-top: var(--space-sm) !important;
+}
+
+#root.view-counter .progress-labels {
+  font-size: clamp(0.7rem, 2.2vw, 0.8rem) !important;
+  margin-bottom: var(--space-xs) !important;
+}
+
+#root.view-counter .progress-pct {
+  font-size: clamp(0.7rem, 2.2vw, 0.85rem) !important;
+  margin-top: var(--space-xs) !important;
 }
 
 /* In ranking-only view remove the bottom carousel gap */
