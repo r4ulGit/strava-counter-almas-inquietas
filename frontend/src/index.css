@@ -66,10 +66,7 @@ body {
   font-size: 16px;
   line-height: 1.6;
   color: var(--text-primary);
-  background-color: var(--bg-primary);
-  background-image:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(98, 192, 187, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(98, 192, 187, 0.07) 0%, transparent 50%);
+  background: transparent;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
