@@ -579,7 +579,7 @@
   bottom: calc(100% + 4px); /* Sits right on top of the dot marker */
   left: 50%;
   transform: translateX(-50%);
-  width: 27px; /* Width of the flag, increased 35% from 20px */
+  width: 30px; /* Width of the flag, increased 50% from 20px */
   height: auto;
   z-index: 3;
   pointer-events: none; /* Let hover tooltips register on the parent marker */
