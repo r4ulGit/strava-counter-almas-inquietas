@@ -104,7 +104,7 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-muted);
-  margin-bottom: var(--space-sm);
+  margin-bottom: 28px; /* Extra room for checkpoint flags */
   letter-spacing: 0.04em;
 }
 
@@ -486,7 +486,7 @@
 
 #root.view-counter .progress-labels {
   font-size: clamp(0.7rem, 2.2vw, 0.8rem) !important;
-  margin-bottom: var(--space-xs) !important;
+  margin-bottom: 24px !important; /* Extra room for checkpoint flags in compact view */
 }
 
 #root.view-counter .progress-pct {
@@ -571,5 +571,17 @@
 @keyframes checkpoint-pulse {
   0%, 100% { box-shadow: 0 0 6px var(--activum-teal-glow); transform: translateX(-50%) scale(1); }
   50%      { box-shadow: 0 0 14px var(--activum-teal-glow); transform: translateX(-50%) scale(1.15); }
+}
+
+/* Checkpoint flag image style */
+.checkpoint-flag {
+  position: absolute;
+  bottom: calc(100% + 4px); /* Sits right on top of the dot marker */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px; /* Width of the flag */
+  height: auto;
+  z-index: 3;
+  pointer-events: none; /* Let hover tooltips register on the parent marker */
 }
 
