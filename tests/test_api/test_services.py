@@ -236,3 +236,31 @@ class TestBuildDashboardData:
              patch.object(svc.db, 'get_top_athletes', return_value=[]):
             result = svc.build_dashboard_data()
         assert result['config']['title'] == "My Custom Title!"
+
+    def test_checkpoints_parsed_and_sorted_when_goal_km_is_set(self, monkeypatch):
+        monkeypatch.setenv('CHECKPOINTS', '2000,500,1000')
+        monkeypatch.setenv('GOAL_KM', '6000')
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=[]), \
+             patch.object(svc.db, 'get_top_athletes', return_value=[]):
+            result = svc.build_dashboard_data()
+        assert result['config']['checkpoints'] == [500.0, 1000.0, 2000.0]
+
+    def test_checkpoints_is_empty_when_goal_km_not_set(self, monkeypatch):
+        monkeypatch.setenv('CHECKPOINTS', '500,1000')
+        monkeypatch.setenv('GOAL_KM', '')
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=[]), \
+             patch.object(svc.db, 'get_top_athletes', return_value=[]):
+            result = svc.build_dashboard_data()
+        assert result['config']['checkpoints'] == []
+
+    def test_checkpoints_malformed_values_ignored(self, monkeypatch):
+        monkeypatch.setenv('CHECKPOINTS', '500,abc,2000, ,1000.5')
+        monkeypatch.setenv('GOAL_KM', '6000')
+        svc = _load_svc()
+        with patch.object(svc.db, 'get_all_activities', return_value=[]), \
+             patch.object(svc.db, 'get_top_athletes', return_value=[]):
+            result = svc.build_dashboard_data()
+        assert result['config']['checkpoints'] == [500.0, 1000.5, 2000.0]
+
