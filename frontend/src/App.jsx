@@ -3,8 +3,7 @@ import './App.css'
 import { API_URL } from './config.js'
 import { getAuthHeader } from './apiAuth.js'
 import ActivityCarousel from './components/ActivityCarousel.jsx'
-import greenFlag from '../images/green_flag.png'
-import redFlag from '../images/red_flag.png'
+import checkpointFlag from '../images/checkpoint_flag.png'
 
 // ---------------------------------------------------------------------------
 // Query param helper — reads ?view= from the URL
@@ -109,7 +108,7 @@ function CounterSection({ totalKm, goalKm, totalActivities, checkpoints = [] }) 
                   title={`${cp.toLocaleString('es-ES')} km`}
                 >
                   <img
-                    src={achieved ? greenFlag : redFlag}
+                    src={checkpointFlag}
                     alt={achieved ? "Conseguido" : "Pendiente"}
                     className="checkpoint-flag"
                   />
