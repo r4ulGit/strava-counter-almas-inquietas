@@ -579,7 +579,7 @@
   bottom: calc(100% + 4px); /* Sits right on top of the dot marker */
   left: 50%;
   /* Shift left to align the flagpole/stick (which is offset from the left edge in the PNG) with the dot */
-  transform: translateX(-22%);
+  transform: translateX(-26%);
   width: clamp(18px, 3.2vw, 32px); /* Responsive width: scales with viewport */
   height: auto;
   z-index: 3;
