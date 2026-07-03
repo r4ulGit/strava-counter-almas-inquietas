@@ -138,7 +138,7 @@
 }
 
 .progress-pct {
-  margin-top: 10px;
+  margin-top: 24px; /* Space below checkpoint labels */
   font-size: 0.85rem;
   color: var(--text-secondary);
   text-align: right;
@@ -491,7 +491,7 @@
 
 #root.view-counter .progress-pct {
   font-size: clamp(0.7rem, 2.2vw, 0.85rem) !important;
-  margin-top: var(--space-xs) !important;
+  margin-top: 18px !important; /* Space below checkpoint labels in compact view */
 }
 
 #root.view-counter .checkpoint-label {
