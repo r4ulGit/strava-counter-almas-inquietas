@@ -578,7 +578,7 @@
   position: absolute;
   bottom: calc(100% + 4px); /* Sits right on top of the dot marker */
   left: 50%;
-  transform: translateX(-50%);
+  /* Removed translateX(-50%) so the left-side flagpole aligns with the dot */
   width: clamp(18px, 3.2vw, 32px); /* Responsive width: scales with viewport */
   height: auto;
   z-index: 3;
