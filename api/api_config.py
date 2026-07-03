@@ -34,6 +34,24 @@ if _goal_km_raw:
 else:
     GOAL_KM = None
 
+# --- Checkpoints ---
+# Comma-separated km values for progress bar milestones.
+# Only effective when GOAL_KM is set. Example: "500,1000,2000,5000"
+_checkpoints_raw = os.getenv('CHECKPOINTS', '').strip()
+if _checkpoints_raw and GOAL_KM is not None:
+    CHECKPOINTS = []
+    for val in _checkpoints_raw.split(','):
+        val = val.strip()
+        if val:
+            try:
+                CHECKPOINTS.append(float(val))
+            except (ValueError, TypeError):
+                pass
+    CHECKPOINTS.sort()
+else:
+    CHECKPOINTS = []
+
+
 try:
     LAST_ACT = int(os.getenv('LAST_ACT', 10))
 except (ValueError, TypeError):

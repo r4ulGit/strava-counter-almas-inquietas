@@ -102,5 +102,6 @@ def build_dashboard_data() -> dict:
         "config": {
             "goal_km": config.GOAL_KM,
             "title": config.TITLE,
+            "checkpoints": config.CHECKPOINTS,
         }
     }

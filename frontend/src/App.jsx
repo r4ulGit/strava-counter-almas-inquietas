@@ -3,6 +3,7 @@ import './App.css'
 import { API_URL } from './config.js'
 import { getAuthHeader } from './apiAuth.js'
 import ActivityCarousel from './components/ActivityCarousel.jsx'
+import checkpointFlag from '../images/checkpoint_flag.png'
 
 // ---------------------------------------------------------------------------
 // Query param helper — reads ?view= from the URL
@@ -63,7 +64,7 @@ function LoadingSkeleton({ view }) {
 // ---------------------------------------------------------------------------
 // KM Counter section — hides progress bar when goalKm is null
 // ---------------------------------------------------------------------------
-function CounterSection({ totalKm, goalKm, totalActivities }) {
+function CounterSection({ totalKm, goalKm, totalActivities, checkpoints = [] }) {
   const hasGoal = goalKm !== null && goalKm !== undefined;
   const percentage = hasGoal
     ? Math.min(Math.max((totalKm / goalKm) * 100, 0), 100)
@@ -94,6 +95,29 @@ function CounterSection({ totalKm, goalKm, totalActivities }) {
             aria-valuemax={100}
           >
             <div className="progress-fill" style={{ width: `${percentage}%` }} />
+
+            {/* Checkpoint markers */}
+            {checkpoints.map((cp) => {
+              const position = Math.min((cp / goalKm) * 100, 100);
+              const achieved = totalKm >= cp;
+              return (
+                <div
+                  key={cp}
+                  className={`checkpoint-marker ${achieved ? 'achieved' : ''}`}
+                  style={{ left: `${position}%` }}
+                  title={`${cp.toLocaleString('es-ES')} km`}
+                >
+                  <img
+                    src={checkpointFlag}
+                    alt={achieved ? "Conseguido" : "Pendiente"}
+                    className="checkpoint-flag"
+                  />
+                  <span className="checkpoint-label">
+                    {cp >= 1000 ? `${(cp / 1000).toLocaleString('es-ES')}K` : cp.toLocaleString('es-ES')}
+                  </span>
+                </div>
+              );
+            })}
           </div>
           <p className="progress-pct">
             Progreso: <strong>{percentage.toFixed(1)}%</strong>
@@ -276,6 +300,7 @@ function App() {
   // --- Data ---
   // goal_km can be null when the env var is not set — CounterSection handles this
   const goalKm        = data.config?.goal_km ?? null;
+  const checkpoints   = data.config?.checkpoints ?? [];
   const totalKm       = data.total_km ?? 0;
   const topAthletes   = data.top_athletes ?? [];
   const lastActivities = data.last_activities ?? [];
@@ -300,6 +325,7 @@ function App() {
             totalKm={totalKm}
             goalKm={goalKm}
             totalActivities={data.total_activities}
+            checkpoints={checkpoints}
           />
         )}
 

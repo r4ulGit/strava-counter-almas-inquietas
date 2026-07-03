@@ -104,7 +104,7 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-muted);
-  margin-bottom: var(--space-sm);
+  margin-bottom: 28px; /* Extra room for checkpoint flags */
   letter-spacing: 0.04em;
 }
 
@@ -117,7 +117,8 @@
   background: rgba(148, 163, 184, 0.2);
   border-radius: 100px;
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Allow checkpoint markers/labels to extend outside */
+  margin-bottom: 18px; /* Extra room for checkpoint labels */
 }
 
 .progress-fill {
@@ -133,10 +134,11 @@
   transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
   animation: shimmer 2.5s linear infinite;
   position: relative;
+  overflow: hidden; /* Keep rounded corners on fill */
 }
 
 .progress-pct {
-  margin-top: 10px;
+  margin-top: 40px; /* Space below checkpoint labels */
   font-size: 0.85rem;
   color: var(--text-secondary);
   text-align: right;
@@ -484,12 +486,20 @@
 
 #root.view-counter .progress-labels {
   font-size: clamp(0.7rem, 2.2vw, 0.8rem) !important;
-  margin-bottom: var(--space-xs) !important;
+  margin-bottom: 24px !important; /* Extra room for checkpoint flags in compact view */
 }
 
 #root.view-counter .progress-pct {
   font-size: clamp(0.7rem, 2.2vw, 0.85rem) !important;
-  margin-top: var(--space-xs) !important;
+  margin-top: 32px !important; /* Space below checkpoint labels in compact view */
+}
+
+#root.view-counter .checkpoint-label {
+  font-size: clamp(0.5rem, 1.8vw, 0.6rem) !important;
+}
+
+#root.view-counter .progress-track {
+  margin-bottom: 14px !important;
 }
 
 /* In ranking-only view remove the bottom carousel gap */
@@ -501,4 +511,97 @@
 #root.view-activities .carousel-section {
   margin-bottom: 0;
 }
+
+/* ---- Checkpoint Markers ---- */
+.checkpoint-marker {
+  position: absolute;
+  top: -3px;
+  height: calc(100% + 6px);
+  width: 2px;
+  background: var(--text-muted);
+  transform: translateX(-50%);
+  transition: background var(--transition-normal);
+  z-index: 2;
+}
+
+/* Dot on top of the marker */
+.checkpoint-marker::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  transition: background var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+/* Label below the bar — always visible (mobile-friendly) */
+.checkpoint-label {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* ---- Achieved state ---- */
+.checkpoint-marker.achieved {
+  background: var(--activum-teal);
+}
+
+.checkpoint-marker.achieved::before {
+  background: var(--activum-teal);
+  box-shadow: 0 0 8px var(--activum-teal-glow);
+  animation: checkpoint-pulse 2s ease-in-out infinite;
+}
+
+.checkpoint-marker.achieved .checkpoint-label {
+  color: var(--activum-teal-dark);
+}
+
+/* Subtle pulse animation for achieved checkpoints */
+@keyframes checkpoint-pulse {
+  0%, 100% { box-shadow: 0 0 6px var(--activum-teal-glow); transform: translateX(-50%) scale(1); }
+  50%      { box-shadow: 0 0 14px var(--activum-teal-glow); transform: translateX(-50%) scale(1.15); }
+}
+
+/* Checkpoint flag image style */
+.checkpoint-flag {
+  position: absolute;
+  bottom: calc(100% + 4px); /* Sits right on top of the dot marker */
+  left: 50%;
+  /* Shift left to align the flagpole/stick (which is offset from the left edge in the PNG) with the dot */
+  transform: translateX(-38%);
+  width: clamp(18px, 3.2vw, 32px); /* Responsive width: scales with viewport */
+  height: auto;
+  z-index: 3;
+  pointer-events: none; /* Let hover tooltips register on the parent marker */
+  transition: filter var(--transition-normal);
+}
+
+/* 
+  If the base image is RED: 
+  Turn it GREEN (hue-rotate 120deg) when achieved.
+*/
+.checkpoint-marker.achieved .checkpoint-flag {
+  filter: hue-rotate(120deg) saturate(1.3) brightness(0.95);
+}
+
+/* 
+  If the base image is GREEN:
+  Turn it RED (hue-rotate 240deg) when NOT achieved (pending).
+  (Uncomment if your original flag image is green)
+  
+  .checkpoint-marker:not(.achieved) .checkpoint-flag {
+    filter: hue-rotate(240deg) saturate(1.3) brightness(0.95);
+  }
+*/
 
