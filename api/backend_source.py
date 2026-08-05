@@ -13,10 +13,17 @@ import utils
 def _get_cors_headers(origin: str) -> dict:
     """
     Returns CORS headers. Allows the request origin if it is in the
-    configured whitelist, otherwise falls back to the first allowed origin.
+    configured whitelist, or if '*' is configured,
+    otherwise falls back to the first allowed origin.
     """
-    allowed = [o.strip() for o in config.CORS_ALLOWED_ORIGINS.split(',')]
-    allowed_origin = origin if origin in allowed else (allowed[0] if allowed else '*')
+    allowed_raw = [o.strip().rstrip('/') for o in config.CORS_ALLOWED_ORIGINS.split(',')]
+    normalised_origin = (origin or '').strip().rstrip('/')
+
+    if '*' in allowed_raw or normalised_origin in allowed_raw:
+        allowed_origin = origin if origin else '*'
+    else:
+        allowed_origin = allowed_raw[0] if allowed_raw else '*'
+
     return {
         'Access-Control-Allow-Origin': allowed_origin,
         'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Api-Key,X-Timestamp,X-Nonce,X-Signature',
