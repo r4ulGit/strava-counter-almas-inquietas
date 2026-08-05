@@ -33,33 +33,33 @@ def build_dashboard_data() -> dict:
 
         # 3. Start Date Filter
         if config.START_DATE:
-            start_date = item.get('start_date') or ''
+            start_date = str(item.get('start_date') or '')
             if start_date < config.START_DATE:
                 continue
 
         filtered_items.append(item)
 
     # Sum filtered activities
-    total_km = sum(float(item.get('distance_km', 0)) for item in filtered_items)
+    total_km = sum(float(item.get('distance_km') or 0) for item in filtered_items)
     total_activities = len(filtered_items)
 
     # Sort by date descending for recent activities
     items_sorted = sorted(
         filtered_items,
-        key=lambda x: x.get('start_date', ''),
+        key=lambda x: str(x.get('start_date') or ''),
         reverse=True
     )
     last_activities = []
     for item in items_sorted[:config.LAST_ACT]:
         last_activities.append({
             "id": item.get('activity_id'),
-            "title": item.get('title', 'Unknown'),
-            "athlete": item.get('athlete', 'Unknown'),
-            "type": item.get('type', 'Unknown'),
-            "sport_type": item.get('sport_type', item.get('type', 'Unknown')),
-            "distance_km": round(float(item.get('distance_km', 0)), 2),
-            "moving_time_seconds": int(item.get('moving_time_seconds', 0)),
-            "date": item.get('start_date', ''),
+            "title": item.get('title') or 'Unknown',
+            "athlete": item.get('athlete') or 'Unknown',
+            "type": item.get('type') or 'Unknown',
+            "sport_type": item.get('sport_type') or item.get('type') or 'Unknown',
+            "distance_km": round(float(item.get('distance_km') or 0), 2),
+            "moving_time_seconds": int(item.get('moving_time_seconds') or 0),
+            "date": str(item.get('start_date') or ''),
         })
 
     # Calculate top 10 athletes dynamically based on filtered activities
@@ -68,8 +68,8 @@ def build_dashboard_data() -> dict:
         athlete_name = item.get('athlete')
         if not athlete_name or athlete_name == 'Unknown':
             continue
-        dist = float(item.get('distance_km', 0))
-        date = item.get('start_date', '')
+        dist = float(item.get('distance_km') or 0)
+        date = str(item.get('start_date') or '')
 
         if athlete_name not in athlete_stats:
             athlete_stats[athlete_name] = {

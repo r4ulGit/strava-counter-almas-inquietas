@@ -13,8 +13,8 @@
  * safety buffer before their actual expiry.
  */
 
-const API_KEY = import.meta.env.VITE_API_KEY || '';
-const API_SIGNING_SECRET = import.meta.env.VITE_API_SIGNING_SECRET || '';
+const API_KEY = (import.meta.env.VITE_API_KEY || '').trim();
+const API_SIGNING_SECRET = (import.meta.env.VITE_API_SIGNING_SECRET || '').trim();
 const SESSION_KEY = 'activum_auth_token';
 const TTL_SAFETY_BUFFER_S = 30; // Refresh token 30s before it expires
 
