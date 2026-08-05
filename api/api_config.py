@@ -59,8 +59,8 @@ except (ValueError, TypeError):
 
 # --- Authentication ---
 # If API_KEY or API_SIGNING_SECRET are empty, auth is DISABLED (passthrough mode).
-API_KEY = os.getenv('API_KEY', '')
-API_SIGNING_SECRET = os.getenv('API_SIGNING_SECRET', '')
+API_KEY = os.getenv('API_KEY', '').strip()
+API_SIGNING_SECRET = os.getenv('API_SIGNING_SECRET', '').strip()
 
 try:
     AUTH_TOLERANCE_SECONDS = int(os.getenv('AUTH_TOLERANCE_SECONDS', 300))
